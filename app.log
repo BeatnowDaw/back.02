@@ -1,0 +1,8 @@
+WARNING:passlib.handlers.bcrypt:(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\hugogarsan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+INFO:root:2024-04-10 19:07:12.369192 - Inicio de sesión exitoso para usuario: string
+INFO:root:2024-04-10 19:07:49.331665 - Inicio de sesión exitoso para usuario: string
