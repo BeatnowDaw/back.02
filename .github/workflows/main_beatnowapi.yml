@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - BeatNowApi
+name: Build and deploy Python app to Azure Web App - beatnowApi
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v1
         with:
-          python-version: '3.12'
+          python-version: '3.11'
 
       - name: Create and start virtual environment
         run: |
@@ -65,14 +65,14 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D97240FDFC0E4761B5DC9A6604111856 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_40E2884A0C3241E78CE3286B5740D7DC }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2EE00A3E6213421298CF37C43C8A719F }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C43920D3D74E4C8B93AAA8E06DF64431 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_002FD7DED2A046E3A1512C3C5402A7B2 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9AF43E5F887D4FCEA7134E076B5449CB }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
         with:
-          app-name: 'BeatNowApi'
+          app-name: 'beatnowApi'
           slot-name: 'Production'
           
