@@ -1,4 +1,8 @@
-name: Build and deploy Python app to Azure Web App - BN-BackEnd
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+
+name: Build and deploy Python app to Azure Web App - beatnowApi
 
 on:
   push:
@@ -16,7 +20,7 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v1
         with:
-          python-version: '3.12'
+          python-version: '3.11'
 
       - name: Create and start virtual environment
         run: |
@@ -43,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: 'Production'
+      name: 'production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
       id-token: write #This is required for requesting the JWT
@@ -57,21 +61,17 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      - name: 'Delay before deploying to Azure Web App'
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '30s' # Adjust the delay time according to your needs
-
+      
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0A661BC5389C45FCAEB0D60B17CBD247 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A1B9E9BA9EB94ED88C48638270A8E799 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_67BF29B56C7145B1AB4A9BAFD3CFA312 }}
+          client-id: ${{ secrets.__clientidsecretname__ }}
+          tenant-id: ${{ secrets.__tenantidsecretname__ }}
+          subscription-id: ${{ secrets.__subscriptionidsecretname__ }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
         with:
-          app-name: 'BN-BackEnd'
-          slot-name: 'Production'
+          app-name: 'beatnowApi'
+          slot-name: 'production'
