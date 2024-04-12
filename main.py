@@ -14,3 +14,10 @@ async def root():
 @app.get("/hello/{name}")
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
+
+def main():
+    start_http_server(8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
+
+if __name__ == "__main__":
+    main()

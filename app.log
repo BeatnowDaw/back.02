@@ -13,3 +13,46 @@ Traceback (most recent call last):
               ^^^^^^^^^^^^^^^^^
 AttributeError: module 'bcrypt' has no attribute '__about__'
 INFO:root:2024-04-11 18:18:35.898722 - Inicio de sesión exitoso para usuario: string
+WARNING:passlib.handlers.bcrypt:(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\hugogarsan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+WARNING:passlib.handlers.bcrypt:(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\hugogarsan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+INFO:root:2024-04-12 17:33:45.808071 - Intento de inicio de sesión fallido para usuario: hugog
+INFO:root:2024-04-12 17:42:53.102527 - Intento de inicio de sesión fallido para usuario: antonieta
+INFO:root:2024-04-12 17:43:11.017880 - Intento de inicio de sesión fallido para usuario: hugog
+INFO:root:2024-04-12 17:43:16.660494 - Intento de inicio de sesión fallido para usuario: hugogarsan
+INFO:root:2024-04-12 17:46:53.905810 - Intento de inicio de sesión fallido para usuario: hugog
+INFO:root:2024-04-12 17:47:03.915731 - Intento de inicio de sesión fallido para usuario: hugog
+INFO:root:2024-04-12 17:53:06.063233 - Intento de inicio de sesión fallido para usuario: hugogarsan
+INFO:root:2024-04-12 18:12:26.853995 - Intento de inicio de sesión fallido para usuario: 
+INFO:root:2024-04-12 18:43:41.795474 - Intento de inicio de sesión fallido para usuario: hugog
+INFO:root:2024-04-12 18:47:23.391692 - Intento de inicio de sesión fallido para usuario: hugofasfa
+INFO:root:2024-04-12 18:47:35.486190 - Intento de inicio de sesión fallido para usuario: hugog
+INFO:root:2024-04-12 18:47:40.654913 - Intento de inicio de sesión fallido para usuario: hugogarsan
+INFO:root:2024-04-12 18:48:16.107970 - Intento de inicio de sesión fallido para usuario: String
+INFO:root:2024-04-12 18:52:02.855257 - Intento de inicio de sesión fallido para usuario: String
+INFO:root:2024-04-12 18:52:14.273495 - Intento de inicio de sesión fallido para usuario: hugog
+INFO:root:2024-04-12 18:52:21.463118 - Intento de inicio de sesión fallido para usuario: hugog
+WARNING:passlib.handlers.bcrypt:(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\hugogarsan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+INFO:root:2024-04-12 18:53:28.777161 - Intento de inicio de sesión fallido para usuario: hugo123
+INFO:root:2024-04-12 18:53:49.295655 - Intento de inicio de sesión fallido para usuario: hugo123
+INFO:root:2024-04-12 19:01:30.306207 - Intento de inicio de sesión fallido para usuario: hugo123
+WARNING:passlib.handlers.bcrypt:(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\hugogarsan\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
