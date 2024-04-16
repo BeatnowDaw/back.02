@@ -6,6 +6,10 @@ import uvicorn
 app = FastAPI()
 app.include_router(router)
 
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+
 def main():
     start_http_server(8000)
     uvicorn.run(app, host="0.0.0.0", port=8001)
