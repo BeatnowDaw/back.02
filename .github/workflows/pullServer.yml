@@ -27,7 +27,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }} # or use privateKey: ${{ secrets.SERVER_PRIVATE_KEY }}
           script: |
-            cd /home/beatnow/backend/BN-BackEnd
+            cd /home/ubuntu/BN-BackEnd
             git pull origin main
             sudo systemctl restart backendBeatNow  # Reemplaza "your_application_service" por el nombre de tu servicio
 
