@@ -10,11 +10,6 @@ app.include_router(router)
 async def root():
     return {"message": "Hello World"}
 
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
-
 def main():
     start_http_server(8000)
     uvicorn.run(app, host="0.0.0.0", port=8001)
