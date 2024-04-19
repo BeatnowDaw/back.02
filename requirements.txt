@@ -72,3 +72,4 @@ watchfiles==0.21.0
 websocket-client==1.7.0
 websockets==10.4
 Werkzeug==3.0.2
+paramiko==2.8.1
