@@ -7,6 +7,11 @@ from model.schema import UsuarioInDB
 
 from datetime import datetime
 
+SSH_USERNAME_RES = "beatnowadmin"
+SSH_PASSWORD_RES = "Monlau20212021!"
+SSH_HOST_RES = "172.203.251.28"
+
+
 # Configuración de la seguridad y autenticación OAuth2
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
