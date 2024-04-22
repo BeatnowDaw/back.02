@@ -1,5 +1,12 @@
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.database import Database
 
-mongo_client = MongoClient('mongodb+srv://beatnow33:Monlau2021!@beatnow.v1mxd4q.mongodb.net/?retryWrites=true&w=majority&appName=BeatNow')
+mongo_client = AsyncIOMotorClient('mongodb+srv://beatnow33:Monlau2021!@beatnow.v1mxd4q.mongodb.net/?retryWrites=true&w=majority&appName=BeatNow')
 db = mongo_client['BeatNow']
-usuarios_collection = db['Users']
+users_collection = db['Users']
+
+
+
+async def get_database() -> Database:
+    mongo_client = AsyncIOMotorClient('mongodb+srv://beatnow33:Monlau2021!@beatnow.v1mxd4q.mongodb.net/?retryWrites=true&w=majority&appName=BeatNow')
+    return mongo_client['BeatNow']

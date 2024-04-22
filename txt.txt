@@ -1,0 +1,61 @@
+class Publication(BaseModel):
+    user_id: str = Field(alias="user_id")
+    title: str = Field(alias="username")
+    carpet_file: str = Field(alias="audio_file")
+    publication_date: datetime = Field(alias="publication_date")
+
+class Like(BaseModel):
+    _id: str = Field(alias="like_id")
+    user_id: str = Field(alias="user_id")
+    publication_id: str = Field(alias="publication_id")
+    like_date: datetime = Field(alias="like_date")
+
+class MusicBase(BaseModel):
+    _id: str = Field(alias="base_id")
+    user_id: str = Field(alias="user_id")
+    licenses: str = Field(alias="license_id")
+    bpm: int = Field(alias="bpm")
+    genre_id: str = Field(alias="genre_id")
+    subgenre_id: str = Field(alias="subgenre_id")
+    mood_id: List[str] = Field(alias="mood_id")
+    instrument_id: List[str] = Field(alias="instrument_id")
+    tag_id: List[str] = Field(alias="tag_id")
+    license_id: List[str] = Field(alias="license_id")
+
+class Genre(BaseModel):
+    _id: str = Field(alias="genre_id")
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
+
+class Mood(BaseModel):
+    _id: str = Field(alias="mood_id")
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
+
+class Instrument(BaseModel):
+    _id: str = Field(alias="instrument_id")
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
+
+class Tag(BaseModel):
+    _id: str = Field(alias="tag_id")
+    name: str = Field(alias="name")
+
+class Purchase(BaseModel):
+    _id: str = Field(alias="purchase_id")
+    buyer_user_id: str = Field(alias="user_id")
+    owner_user_id: str = Field(alias="user_id")
+    base_id: str = Field(alias="base_id")
+    price: float = Field(alias="price")
+
+class LicenseType(BaseModel):
+    _id: str = Field(alias="license_type_id")
+    license_type: str = Field(alias="license_type")
+    description: str = Field(alias="description")
+
+class License(BaseModel):
+    _id: str = Field(alias="license_id")
+    license_type_id: str = Field(alias="license_type_id")
+    extra_description: str = Field(alias="extra_description")
+    base_id: str = Field(alias="base_id")
+    price: float = Field(alias="price")
