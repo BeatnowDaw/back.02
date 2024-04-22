@@ -18,8 +18,8 @@ jobs:
         run: |
           sudo apt update
           sudo apt install python3 python3-pip -y
-          source /home/ubuntu/BN-BackEnd/beatnowvenv/bin/activate
-          pip install -r BN-BackEnd/requirements.txt
+          cd /home/ubuntu/BN-BackEnd
+          pip install -r requirements.txt
 
       - name: SSH into Ubuntu Server and deploy
         uses: appleboy/ssh-action@master
