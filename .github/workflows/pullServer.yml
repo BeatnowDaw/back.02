@@ -16,8 +16,9 @@ jobs:
 
       - name: Install Python and dependencies
         run: |
-          cd /home/ubuntu/BN-BackEnd
-          pip install -r requirements.txt
+          sudo apt update
+          sudo apt install python3 python3-pip -y
+          pip3 install -r requirements.txt
 
       - name: SSH into Ubuntu Server and deploy
         uses: appleboy/ssh-action@master
@@ -29,4 +30,3 @@ jobs:
             cd /home/ubuntu/BN-BackEnd
             git pull origin main
             sudo systemctl restart backendBeatNow  # Reemplaza "your_application_service" por el nombre de tu servicio
-
