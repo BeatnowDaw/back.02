@@ -575,3 +575,8 @@ INFO:root:2024-04-23 15:59:20.740681 - Login successful for username: string
 INFO:root:2024-04-23 15:59:20.996522 - Login successful for username: string
 INFO:root:2024-04-23 16:03:34.173538 - Login successful for username: string
 INFO:root:2024-04-23 16:03:34.408082 - Login successful for username: string
+INFO:root:2024-04-23 16:31:08.752924 - Login successful for username: string
+INFO:root:2024-04-23 16:38:02.418926 - Login successful for username: string
+INFO:root:2024-04-23 16:39:16.505203 - Login failed - Incorrect password for username: string
+INFO:root:2024-04-23 16:39:23.112963 - Login successful for username: string
+INFO:root:2024-04-23 16:42:19.752529 - Login successful for username: string

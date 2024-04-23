@@ -1,10 +1,12 @@
 from typing import Annotated
+
+from bson import ObjectId
 from fastapi import Depends, HTTPException,status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 import logging
 from prometheus_client import Counter
-from config.db import users_collection
+from config.db import users_collection, post_collection
 from datetime import datetime
 from model.shemas import User, UserInDB
 
@@ -64,6 +66,10 @@ async def get_user_id(username: str):
     else:
         return "Usuario no encontrado"  # O maneja esto de otra forma
 
+async def check_post_exists(post_id: str, db):
+    existing_post = await post_collection.find_one({"_id": ObjectId(post_id)})
+    if not existing_post:
+        raise HTTPException(status_code=404, detail="Post not found")
 
  
 def guardar_log(evento):

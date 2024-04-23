@@ -5,7 +5,7 @@ mongo_client = AsyncIOMotorClient('mongodb+srv://beatnow33:Monlau2021!@beatnow.v
 db = mongo_client['BeatNow']
 users_collection = db['Users']
 post_collection = db['Posts']
-
+interactions_collection = db['Interactions']
 
 
 async def get_database() -> Database:

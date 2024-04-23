@@ -3,7 +3,7 @@ from bson import ObjectId
 from datetime import datetime
 from typing import List
 from model.shemas import Post, UserInDB
-from config.db import get_database, post_collection, users_collection
+from config.db import get_database, post_collection, users_collection, interactions_collection
 from config.security import get_current_user, get_user_id
 from model.shemas import User
 
@@ -60,9 +60,13 @@ async def delete_publication(post_id: str, current_user: User = Depends(get_curr
 
 
 @router.get("/user/{username}", response_model=List[Post])
-async def list_user_publications(username: str, db=Depends(get_database)):
+async def list_user_publications(username: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
 
-    # Verificar si el usuario existe
+    # Verificar si el usuario actual tiene permiso para acceder a las publicaciones del usuario solicitado
+    if current_user.username != username:
+        raise HTTPException(status_code=403, detail="You are not authorized to access this user's publications")
+
+    # Verificar si el usuario solicitado existe
     user_exists = await users_collection.find_one({"username": username})
     if not user_exists:
         raise HTTPException(status_code=404, detail="User not found")
