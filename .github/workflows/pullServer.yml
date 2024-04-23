@@ -30,4 +30,3 @@ jobs:
             cd /home/ubuntu/BN-BackEnd
             git pull origin main
             sudo systemctl restart backendBeatNow  # Reemplaza "your_application_service" por el nombre de tu servicio
-
