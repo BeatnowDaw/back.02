@@ -1,6 +1,6 @@
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
-from model.shemas import User
+from model.shemas import User, UserInDB
 from config.security import guardar_log
 from config.db import users_collection
 from fastapi.security import OAuth2PasswordRequestForm

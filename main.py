@@ -12,8 +12,7 @@ app.include_router(users_router, prefix="/v1/api/users")
 app.include_router(posts_router, prefix="/v1/api/posts")
 app.include_router(routes_router)
 
-# Actualizar las referencias hacia adelante
-#User.update_forward_refs()
+
 
 @app.get("/")
 async def root():

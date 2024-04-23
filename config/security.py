@@ -6,7 +6,7 @@ import logging
 from prometheus_client import Counter
 from config.db import users_collection
 from datetime import datetime
-from model.shemas import User
+from model.shemas import User, UserInDB
 
 SSH_USERNAME_RES = "beatnowadmin"
 SSH_PASSWORD_RES = "Monlau20212021!"
@@ -25,6 +25,7 @@ requests_counter = Counter('requests_total', 'Total number of requests')
 
 async def get_user(username: str):
     user = await users_collection.find_one({"username": username})
+
     if user:
         return User(**user)
 
@@ -53,7 +54,17 @@ async def get_current_active_user(
     if user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return user
- 
+
+from config.db import users_collection
+
+async def get_user_id(username: str):
+    user = await users_collection.find_one({"username": username})
+    if user:
+        return str(user["_id"])
+    else:
+        return "Usuario no encontrado"  # O maneja esto de otra forma
+
+
  
 def guardar_log(evento):
     now = datetime.now()
