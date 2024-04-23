@@ -1,12 +1,15 @@
 from typing import Annotated
+
+from bson import ObjectId
 from fastapi import Depends, HTTPException,status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 import logging
 from prometheus_client import Counter
-from config.db import users_collection
+from config.db import users_collection, post_collection
 from datetime import datetime
-from model.shemas import User
+from model.shemas import User, UserInDB
+from config.db import users_collection
 
 SSH_USERNAME_RES = "beatnowadmin"
 SSH_PASSWORD_RES = "Monlau20212021!"
@@ -25,6 +28,7 @@ requests_counter = Counter('requests_total', 'Total number of requests')
 
 async def get_user(username: str):
     user = await users_collection.find_one({"username": username})
+
     if user:
         return User(**user)
 
@@ -52,6 +56,21 @@ async def get_current_active_user(
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+
+
+async def get_user_id(username: str):
+    user = await users_collection.find_one({"username": username})
+    if user:
+        return str(user["_id"])
+    else:
+        return "Usuario no encontrado"  # O maneja esto de otra forma
+
+async def check_post_exists(post_id: str, db):
+    existing_post = await post_collection.find_one({"_id": ObjectId(post_id)})
+    if not existing_post:
+        raise HTTPException(status_code=404, detail="Post not found")
 
  
 def guardar_log(evento):

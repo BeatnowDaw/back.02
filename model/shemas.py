@@ -1,26 +1,15 @@
-from typing import List,Dict, Any
+from typing import Optional
+
+import bson
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from datetime import datetime
-from bson import ObjectId
-'''
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError('Invalid ObjectId')
-        return ObjectId(v)
+class Tag(BaseModel):
+    name: str = Field(alias="name")
 
-    @classmethod
-    def __get_pydantic_json_schema__(cls, schema):
-        schema['type'] = 'string'
 
 class User(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias='_id')
     name: str = Field(alias="name")
     last_name: str = Field(alias="last_name")
     age: int = Field(alias="age")
@@ -28,53 +17,67 @@ class User(BaseModel):
     email: str = Field(alias="email")
     password: str = Field(alias="password")
     disabled: bool = Field(alias="disabled")
-    posts: List['Post'] = []
 
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {
-            ObjectId: str
-        }
+class UserInDB(User):
+    id: Optional[str] = Field(default=None, alias='id')
 
-class Post(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias='_id')
-    title: str = Field(alias="title")
-    carpet_file: str = Field(alias="carpet_file")
-    publication_date: datetime = Field(alias="publication_date")
+    @validator('id', pre=True, always=True)
+    def convert_id(cls, v):
+        return str(v) if isinstance(v, ObjectId) else v
+
+
+class Interactions(BaseModel):
+    user_id: str = Field(alias="user_id")
+    post_id: str = Field(alias="publication_id")
+    like_date: Optional[datetime] = Field(default=None, alias="like_date")
+    saved_date: Optional[datetime] = Field(default=None, alias="saved_date")
+    dislike_date: Optional[datetime] = Field(default=None, alias="dislike_date")
+
+class LicenseType(BaseModel):
+    license_type: str = Field(alias="license_type")
     description: str = Field(alias="description")
-    user_id: PyObjectId  # Referencia al ID del usuario
-    tags: List[str] = Field(alias="tags")
+class License(BaseModel):
+    license_type_id: LicenseType = Field(alias="license_type")
+    user_description: str = Field(alias="user_description")
+    post_id: str = Field(alias="post_id")
+    price: float = Field(alias="price")
 
-    class Config:
-        arbitrary_types_allowed = True
-        json_encoders = {
-            ObjectId: str
-        }
+class Genre(BaseModel):
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
 
-'''
+class Mood(BaseModel):
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
+
+class Instrument(BaseModel):
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
+class MusicBase(BaseModel):
+    user_id: str = Field(alias="user_id")
+    licenses: list[License] = Field(alias="license_id")
+    bpm: int = Field(alias="bpm")
+    genre_id: str = Field(alias="genre_id")
+    moods: list[Mood] = Field(alias="moods")
+    instruments: list[Instrument] = Field(alias="instruments")
+    tag_id: list[Tag] = Field(alias="tags")
+    license_id: list[License] = Field(alias="licenses")
+class Purchase(BaseModel):
+    buyer_user_id: str = Field(alias="user_id")
+    owner_user_id: str = Field(alias="user_id")
+    base_id: str = Field(alias="base_id")
+    price: float = Field(alias="price")
+
 class Post(BaseModel):
     user_id: str = Field(alias="user_id")
-    title: str = Field(alias="title")
-    carpet_file: str = Field(alias="carpet_file")
     publication_date: datetime = Field(alias="publication_date")
+    title: str = Field(alias="title")
     description: str = Field(alias="description")
-    tags: list = Field(alias="tags")
-
+    beat_info: MusicBase = Field(alias="beat_info")
 
 class PostInDB(Post):
     _id: str
 
 
-class User(BaseModel):
-    name: str = Field(alias="name")
-    last_name: str = Field(alias="last_name")
-    age: int = Field(alias="age")
-    username: str = Field(alias="username")
-    email: str = Field(alias="email")
-    password: str = Field(alias="password")
-    disabled: bool = Field(alias="disabled")
-    #posts: List[Post] = []
 
-class UserInDB(User):
-    _id: str
 
