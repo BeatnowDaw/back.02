@@ -9,6 +9,7 @@ from prometheus_client import Counter
 from config.db import users_collection, post_collection
 from datetime import datetime
 from model.shemas import User, UserInDB
+from config.db import users_collection
 
 SSH_USERNAME_RES = "beatnowadmin"
 SSH_PASSWORD_RES = "Monlau20212021!"
@@ -56,7 +57,7 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-from config.db import users_collection
+
 
 async def get_user_id(username: str):
     user = await users_collection.find_one({"username": username})
