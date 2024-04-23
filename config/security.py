@@ -1,5 +1,4 @@
 from typing import Annotated
-
 from bson import ObjectId
 from fastapi import Depends, HTTPException,status
 from fastapi.security import OAuth2PasswordBearer
@@ -8,7 +7,7 @@ import logging
 from prometheus_client import Counter
 from config.db import users_collection, post_collection
 from datetime import datetime
-from model.shemas import User, UserInDB
+from model.shemas import User
 from config.db import users_collection
 
 SSH_USERNAME_RES = "beatnowadmin"
@@ -48,17 +47,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
-
-
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user),
-):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-
-
 
 async def get_user_id(username: str):
     user = await users_collection.find_one({"username": username})

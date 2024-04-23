@@ -4,8 +4,10 @@ from config.db import get_database, post_collection, users_collection, interacti
 from config.security import get_current_user, get_user_id, check_post_exists
 from model.shemas import User
 
-
+# Iniciar router
 router = APIRouter()
+
+# Dar like a publicación
 @router.post("/like/{post_id}")
 async def add_like(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
@@ -19,6 +21,7 @@ async def add_like(post_id: str, current_user: User = Depends(get_current_user),
         raise HTTPException(status_code=500, detail="Failed to add like")
     return {"message": "Like added successfully"}
 
+# Guardar publicación
 @router.post("/save/{post_id}")
 async def save_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
@@ -32,6 +35,7 @@ async def save_publication(post_id: str, current_user: User = Depends(get_curren
         raise HTTPException(status_code=500, detail="Failed to save publication")
     return {"message": "Publication saved successfully"}
 
+# Dar dislike a publicación
 @router.post("/dislike/{post_id}")
 async def add_dislike(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
@@ -45,6 +49,7 @@ async def add_dislike(post_id: str, current_user: User = Depends(get_current_use
         raise HTTPException(status_code=500, detail="Failed to add dislike")
     return {"message": "Dislike added successfully"}
 
+# Dar dislike a publicación
 @router.post("/unlike/{post_id}")
 async def remove_like(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
@@ -57,6 +62,7 @@ async def remove_like(post_id: str, current_user: User = Depends(get_current_use
         raise HTTPException(status_code=500, detail="Failed to remove like")
     return {"message": "Like removed successfully"}
 
+# Quitar de guardados una publicación
 @router.post("/unsave/{post_id}")
 async def remove_saved(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
@@ -69,6 +75,7 @@ async def remove_saved(post_id: str, current_user: User = Depends(get_current_us
         raise HTTPException(status_code=500, detail="Failed to remove saved publication")
     return {"message": "Saved publication removed successfully"}
 
+# Quitar dislike a publicación
 @router.post("/undislike/{post_id}")
 async def remove_dislike(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)

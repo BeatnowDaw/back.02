@@ -10,6 +10,7 @@ from model.shemas import User
 
 router = APIRouter()
 
+# Crear publicación
 @router.post("/", response_model=Post)
 async def create_publication(post: Post, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
@@ -26,6 +27,8 @@ async def create_publication(post: Post, current_user: User = Depends(get_curren
         return new_post
     else:
         raise HTTPException(status_code=500, detail="Failed to create publication")
+
+# Leer publicación por ID
 @router.get("/{post_id}", response_model=Post)
 async def read_publication(post_id: str, db=Depends(get_database)):
     post = await post_collection.find_one({"_id": ObjectId(post_id)})
@@ -34,6 +37,7 @@ async def read_publication(post_id: str, db=Depends(get_database)):
     else:
         raise HTTPException(status_code=404, detail="Publication not found")
 
+# Actualizar publicación por ID
 @router.put("/{post_id}", response_model=Post)
 async def update_publication(post_id: str, publication: Post, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     existing_publication = await post_collection.find_one({"_id": ObjectId(post_id)})
@@ -47,6 +51,7 @@ async def update_publication(post_id: str, publication: Post, current_user: User
             return updated_publication
     raise HTTPException(status_code=404, detail="Publication not found")
 
+# Eliminar publicación por ID
 @router.delete("/{post_id}")
 async def delete_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     existing_publication = await post_collection.find_one({"_id": ObjectId(post_id)})
@@ -58,7 +63,7 @@ async def delete_publication(post_id: str, current_user: User = Depends(get_curr
             return {"message": "Publication deleted successfully"}
     raise HTTPException(status_code=404, detail="Publication not found")
 
-
+# Listar todas las publicaciones
 @router.get("/user/{username}", response_model=List[Post])
 async def list_user_publications(username: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
 

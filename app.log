@@ -1,0 +1,15 @@
+INFO:root:2024-04-23 18:10:44.853318 - Login failed - Incorrect username: hugo123
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (publickey) failed.
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (publickey) failed.
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (publickey) failed.
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:root:2024-04-23 18:23:55.562219 - Login successful for username: string
+INFO:root:2024-04-23 18:25:22.236793 - Login successful for username: string
+INFO:root:2024-04-23 18:35:07.418321 - Login successful for username: string
+INFO:root:2024-04-23 18:38:04.475317 - Login successful for username: string
+INFO:root:2024-04-23 18:40:51.166575 - Login successful for username: string

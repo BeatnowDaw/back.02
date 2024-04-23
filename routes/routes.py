@@ -6,8 +6,10 @@ from config.db import users_collection
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import HTTPException, Depends, APIRouter
 
-
+# Iniciar router
 router = APIRouter()
+
+# Login
 @router.post("/token")  # Original route
 @router.post("/login")  # Additional route
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -19,7 +21,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     user = User(**user_dict)
-    if not bcrypt.checkpw(form_data.password.encode('utf-8'), user_dict['password'].encode('utf-8')):
+    if not bcrypt.checkpw(form_data.password.encode('utf-8'), user_dict['password']):
         guardar_log("Login failed - Incorrect password for username: " + form_data.username)
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 

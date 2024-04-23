@@ -3,17 +3,16 @@ from typing import Annotated
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
 from model.shemas import User
-from config.security import oauth2_scheme,guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, get_current_active_user, get_current_user
+from config.security import oauth2_scheme,guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, get_current_user
 from config.db import users_collection
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import HTTPException, Depends, status, APIRouter
 import paramiko
 
+# Iniciar router
 router = APIRouter()
 
-
-
-
+# Registro
 @router.post("/register")
 async def register(user: User):
     # Check if the username is already taken
@@ -26,7 +25,6 @@ async def register(user: User):
     user_dict = user.dict()
     user_dict['password'] = password_hash
     result = await users_collection.insert_one(user_dict)
-    user_id = result.inserted_id
     with paramiko.SSHClient() as ssh:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
@@ -39,19 +37,19 @@ async def register(user: User):
 
         if exit_status != 0:
             raise HTTPException(status_code=500, detail="Error al crear la carpeta en el servidor remoto")
-    return {"_id": str(user_id), **user_dict}
+    return {"_id": str(result.inserted_id)}
 
-
+# Recoger datos del usuario actual
 @router.get("/users/me")
 async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ):
     return current_user
 
-
+#Listar todos los usuarios
 @router.get("/users")
 async def get_all_users(token: str = Depends(oauth2_scheme)):
-    user = await get_current_user(token)  # Espera el resultado de la corutina
+    user = await get_current_user(token)  
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
