@@ -1,6 +1,8 @@
-from passlib.hash import bcrypt
-from model.shemas import User, UserInDB
-from config.security import guardar_log
+from datetime import timedelta
+from passlib.handlers.bcrypt import bcrypt
+import bcrypt
+from model.shemas import User
+from config.security import guardar_log, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user
 from config.db import users_collection
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import HTTPException, Depends, APIRouter
@@ -10,17 +12,23 @@ router = APIRouter()
 
 # Login
 @router.post("/token")
-@router.post("/login")  # Additional route
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user_dict = await users_collection.find_one({"username": form_data.username})
     if not user_dict:
         guardar_log("Login failed - Incorrect username: " + form_data.username)
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     user = User(**user_dict)
-    if not bcrypt.verify(form_data.password, user.password):
+    if not bcrypt.checkpw(form_data.password.encode('utf-8'), user_dict['password']):
         guardar_log("Login failed - Incorrect password for username: " + form_data.username)
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-
-    guardar_log("Login successful for username: " + form_data.username)
-    return {"message": "ok"}
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="Incorrect username or password"
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}

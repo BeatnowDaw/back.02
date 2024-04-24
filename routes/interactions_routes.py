@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Security
 from datetime import datetime
 from config.db import get_database, post_collection, users_collection, interactions_collection
-from config.security import get_current_user, get_user_id, check_post_exists
+from config.security import get_current_user, get_user_id, check_post_exists, decode_token
 from model.shemas import User
 
 # Iniciar router
@@ -87,3 +87,7 @@ async def remove_dislike(post_id: str, current_user: User = Depends(get_current_
     if result.modified_count == 0:
         raise HTTPException(status_code=500, detail="Failed to remove dislike")
     return {"message": "Dislike removed successfully"}
+
+@router.get("/protected-route")
+async def protected_route(current_user: User = Security(decode_token, scopes=["base"])):
+    return {"message": "Hello, secured world!", "user": current_user.username}
