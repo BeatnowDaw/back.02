@@ -32,8 +32,6 @@ async def get_user(username: str):
         return User(**user)
 
 async def fake_decode_token(token):
-    # This doesn't provide any security at all
-    # Check the next version
     user = await get_user(token)  # Await the result of get_user
     return user
 
