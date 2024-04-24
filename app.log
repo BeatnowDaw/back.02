@@ -14,3 +14,7 @@ INFO:root:2024-04-23 18:35:07.418321 - Login successful for username: string
 INFO:root:2024-04-23 18:38:04.475317 - Login successful for username: string
 INFO:root:2024-04-23 18:40:51.166575 - Login successful for username: string
 INFO:root:2024-04-23 18:53:14.843083 - Login successful for username: string
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:root:2024-04-24 18:17:35.918594 - Login successful for username: string
+INFO:root:2024-04-24 18:41:02.105793 - Login successful for username: string
