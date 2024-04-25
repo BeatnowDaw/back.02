@@ -1,5 +1,8 @@
+from email.header import Header
+from msilib.schema import File
 import os
 from datetime import timedelta
+import shutil
 from typing import Annotated
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
@@ -8,7 +11,7 @@ from config.security import oauth2_scheme, guardar_log, SSH_USERNAME_RES, SSH_PA
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from config.db import users_collection
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import HTTPException, Depends, status, APIRouter
+from fastapi import HTTPException, Depends, UploadFile, status, APIRouter
 import paramiko
 
 # Iniciar router
@@ -94,3 +97,35 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     guardar_log("Login successful for username: " + form_data.username)
     return {"message": "ok"}
 
+@router.post("/change_photo_profile")
+async def change_photo_profile(file: UploadFile = File(...), Authorization: str = Header(...)):
+    user = await get_current_user(Authorization)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    root_path = "/var/www/html/beatnow"  # Ruta raíz donde se almacenan las fotos de perfil
+    user_photo_dir = os.path.join(root_path, user.username, "photo_profile")  # Carpeta de fotos de perfil del usuario
+
+    # Verificar si el directorio del usuario existe, si no, crearlo
+    if not os.path.exists(user_photo_dir):
+        os.makedirs(user_photo_dir)
+    else:
+        # Eliminar contenido existente en la carpeta de fotos de perfil del usuario
+        for filename in os.listdir(user_photo_dir):
+            file_path = os.path.join(user_photo_dir, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print(f"Error deleting file: {e}")
+
+    # Guardar la nueva foto de perfil con un nombre único y formato png
+    file_path = os.path.join(user_photo_dir, "photo_profile.png")
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"message": "Photo profile updated successfully"}
