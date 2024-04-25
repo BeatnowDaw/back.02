@@ -1,5 +1,4 @@
 from email.header import Header
-from msilib.schema import File
 import os
 from datetime import timedelta
 import shutil
@@ -11,7 +10,7 @@ from config.security import oauth2_scheme, guardar_log, SSH_USERNAME_RES, SSH_PA
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from config.db import users_collection
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import HTTPException, Depends, UploadFile, status, APIRouter
+from fastapi import File, HTTPException, Depends, UploadFile, status, APIRouter
 import paramiko
 
 # Iniciar router
