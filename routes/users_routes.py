@@ -97,7 +97,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"message": "ok"}
 
 @router.post("/change_photo_profile")
-async def change_photo_profile(file: UploadFile = File(...), Authorization: str = Header(...)):
+async def change_photo_profile(file: UploadFile = File(None), Authorization: str = Header(None)):
     user = await get_current_user(Authorization)
     if not user:
         raise HTTPException(
