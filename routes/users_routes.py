@@ -97,9 +97,12 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"message": "ok"}
 
 @router.post("/change_photo_profile")
-async def change_photo_profile(file: UploadFile = File(None), Authorization: str = Header(None)):
-    user = await get_current_user(Authorization)
-    if not user:
+async def change_photo_profile(
+    file: UploadFile = File(None),
+    Authorization: str = Header(None),
+    current_user: Annotated[str, Depends(get_current_user)] = None
+):
+    if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
@@ -107,7 +110,7 @@ async def change_photo_profile(file: UploadFile = File(None), Authorization: str
         )
     
     root_path = "/var/www/html/beatnow"  # Ruta raíz donde se almacenan las fotos de perfil
-    user_photo_dir = os.path.join(root_path, user.username, "photo_profile")  # Carpeta de fotos de perfil del usuario
+    user_photo_dir = os.path.join(root_path, current_user.username, "photo_profile")  # Carpeta de fotos de perfil del usuario
 
     # Verificar si el directorio del usuario existe, si no, crearlo
     if not os.path.exists(user_photo_dir):
