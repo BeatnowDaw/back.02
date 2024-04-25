@@ -28,12 +28,15 @@ async def register(user: User):
     user_dict['password'] = password_hash
     result = await users_collection.insert_one(user_dict)
     with paramiko.SSHClient() as ssh:
+        root_path = "/var/www/html"
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
         username = user_dict['username']
-        directory_commands = f"sudo mkdir -p /var/www/html/beatnow/{username}/photo_profile /var/www/html/beatnow/{username}/posts"
+        directory_commands = f"sudo mkdir -p {root_path}/beatnow/{username}/photo_profile {root_path}/beatnow/{username}/posts"
+        add_photo_profile = f"sudo cp {root_path}/beatnow/default/default_photo.png {root_path}/beatnow/{username}/photo_profile"
         stdin, stdout, stderr = ssh.exec_command(directory_commands)
+        stdin, stdout, stderr = ssh.exec_command(add_photo_profile)
 
         exit_status = stderr.channel.recv_exit_status()
 
@@ -90,3 +93,4 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
     guardar_log("Login successful for username: " + form_data.username)
     return {"message": "ok"}
+
