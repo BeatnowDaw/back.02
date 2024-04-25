@@ -97,11 +97,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"message": "ok"}
 
 @router.post("/change_photo_profile")
-async def change_photo_profile(
-    file: UploadFile = File(None),
-    Authorization: str = Header(None),
-    current_user: Annotated[str, Depends(get_current_user)] = None
-):
+async def change_photo_profile( file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
