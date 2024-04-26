@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from model.shemas import Lyrics, User
-from config.security import get_current_user
+from config.security import get_current_user, get_user_id
 from config.db import get_database
 from pymongo.errors import PyMongoError
 from bson import ObjectId
@@ -15,7 +15,7 @@ async def handle_database_error(exception: PyMongoError):
 # Obtener todas las letras del usuario actual
 @router.get("/user-lyrics", response_model=List[Lyrics])
 async def get_user_lyrics(current_user: User = Depends(get_current_user), db=Depends(get_database)):
-    user_id = current_user.user_id
+    user_id = await get_user_id(current_user.username)
     try:
         user_lyrics = await db.lyrics_collection.find({"user_id": user_id}).to_list(None)
         return user_lyrics
