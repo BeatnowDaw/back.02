@@ -69,6 +69,12 @@ async def get_user_id(username: str):
         return str(user["_id"])
     else:
         return "Usuario no encontrado"  # O maneja esto de otra forma
+async def get_username(user_id: str):
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    if user:
+        return user["username"]
+    else:
+        return "Usuario no encontrado"
 
 async def check_post_exists(post_id: str, db):
     existing_post = await post_collection.find_one({"_id": ObjectId(post_id)})

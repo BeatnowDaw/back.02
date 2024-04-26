@@ -2,54 +2,67 @@ from fastapi import APIRouter, HTTPException, Depends
 from bson import ObjectId
 from datetime import datetime
 from typing import List
-from model.shemas import Post, UserInDB
-from config.db import get_database, post_collection, users_collection, interactions_collection
-from config.security import get_current_user, get_user_id
-from model.shemas import User
 
+from requests import post
+
+from model.shemas import Post, UserInDB, PostInDB, PostShowed, NewPost
+from config.db import get_database, post_collection, users_collection, interactions_collection
+from config.security import get_current_user, get_user_id, get_username
+from model.shemas import User
+from routes.interactions_routes import count_likes, count_dislikes, count_saved
 
 router = APIRouter()
 
+
 # Crear publicación
-@router.post("/", response_model=Post)
-async def create_publication(post: Post, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+@router.post("/", response_model=PostInDB)
+async def create_publication(new_post: NewPost, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     if user_id == "Usuario no encontrado":
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    new_post = post.dict()  # Convertir el objeto Post a un diccionario
-    new_post["publication_date"] = datetime.now()  # Establecer la fecha de publicación actual
-    new_post["user_id"] = user_id  # Utilizamos el _id del usuario actual
+    post = Post(user_id=str(ObjectId(user_id)), publication_date=datetime.now(), **new_post.dict())
 
-    result = await post_collection.insert_one(new_post)
+    result = await post_collection.insert_one(post.dict())  # Convert the post object to a dictionary
     if result.inserted_id:
-        new_post["_id"] = str(result.inserted_id)  # Convertir ObjectId a string para el retorno
-        return new_post
+        post_db = PostInDB(_id=str(result.inserted_id), **post.dict())  # Convertir ObjectId a string para el retorno
+        return post_db
     else:
         raise HTTPException(status_code=500, detail="Failed to create publication")
 
-# Leer publicación por ID
-@router.get("/{post_id}", response_model=Post)
+
+
+@router.get("/{post_id}", response_model=PostShowed)
 async def read_publication(post_id: str, db=Depends(get_database)):
-    post = await post_collection.find_one({"_id": ObjectId(post_id)})
-    if post:
+    post_dict = await post_collection.find_one({"_id": ObjectId(post_id)})
+    if post_dict:
+        postindb = Post(**post_dict)
+        creator_name = await get_username(post_dict["user_id"])  # Use post_dict instead of post_id
+        post = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(), likes=await count_likes(post_id), dislikes=await count_dislikes(post_id), saves=await count_saved(post_id), creator_username=creator_name)
         return post
     else:
         raise HTTPException(status_code=404, detail="Publication not found")
 
-# Actualizar publicación por ID
-@router.put("/{post_id}", response_model=Post)
-async def update_publication(post_id: str, publication: Post, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+@router.put("/{post_id}", response_model=PostInDB)
+async def update_publication(post_id: str, publication: NewPost, current_user: User = Depends(get_current_user),
+                             db=Depends(get_database)):
     existing_publication = await post_collection.find_one({"_id": ObjectId(post_id)})
     if existing_publication:
-        if existing_publication["user_id"] != await get_user_id(current_user.username):
+        if str(existing_publication["user_id"]) != str(await get_user_id(current_user.username)):
             raise HTTPException(status_code=403, detail="You are not authorized to update this publication")
-        updated_publication = dict(publication.dict())
-        result = await post_collection.update_one({"_id": ObjectId(post_id)}, {"$set": updated_publication})
-        if result.modified_count == 1:
-            updated_publication["_id"] = post_id
-            return updated_publication
-    raise HTTPException(status_code=404, detail="Publication not found")
+
+        # Actualizar los datos existentes con los datos de la publicación
+        existing_publication.update(publication.dict(exclude_unset=True))
+
+        # Actualizar la publicación en la base de datos
+        result = await post_collection.update_one({"_id": ObjectId(post_id)}, {"$set": existing_publication})
+
+        # Convertir ObjectId a string para el retorno
+        existing_publication["_id"] = str(existing_publication["_id"])
+        return existing_publication
+    else:
+        raise HTTPException(status_code=404, detail="Publication not found")
+
 
 # Eliminar publicación por ID
 @router.delete("/{post_id}")
@@ -63,10 +76,11 @@ async def delete_publication(post_id: str, current_user: User = Depends(get_curr
             return {"message": "Publication deleted successfully"}
     raise HTTPException(status_code=404, detail="Publication not found")
 
+
 # Listar todas las publicaciones
 @router.get("/user/{username}", response_model=List[Post])
-async def list_user_publications(username: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
-
+async def list_user_publications(username: str, current_user: User = Depends(get_current_user),
+                                 db=Depends(get_database)):
     # Verificar si el usuario solicitado existe
     user_exists = await users_collection.find_one({"username": username})
     if not user_exists:

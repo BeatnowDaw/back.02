@@ -1,12 +1,11 @@
-import os
 from datetime import timedelta
-from typing import Annotated
+from typing import Annotated, List
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
-from model.shemas import User
+from model.shemas import User, Lyrics
 from config.security import oauth2_scheme, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
-    get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
-from config.db import users_collection
+    get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
+from config.db import users_collection, interactions_collection, get_database, lyrics_collection
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import HTTPException, Depends, status, APIRouter
 import paramiko
@@ -90,3 +89,22 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     )
     guardar_log("Login successful for username: " + form_data.username)
     return {"message": "ok"}
+
+@router.get("/saved-posts")
+async def get_saved_posts(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    user_id = await get_user_id(current_user.username)
+    saved_posts = await interactions_collection.find({"user_id": user_id, "saved_date": {"$exists": True}}).to_list(None)
+    return {"saved_posts": saved_posts}
+
+# Obtener todas las publicaciones likeadas por el usuario
+@router.get("/liked-posts")
+async def get_liked_posts(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    user_id = await get_user_id(current_user.username)
+    liked_posts = await interactions_collection.find({"user_id": user_id, "like_date": {"$exists": True}}).to_list(None)
+    return {"liked_posts": liked_posts}
+
+@router.get("/user-lyrics", response_model=List[Lyrics])
+async def get_user_lyrics(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    user_id = current_user.user_id
+    user_lyrics = await lyrics_collection.find({"user_id": user_id}).to_list(None)
+    return user_lyrics

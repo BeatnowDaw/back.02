@@ -6,6 +6,7 @@ db = mongo_client['BeatNow']
 users_collection = db['Users']
 post_collection = db['Posts']
 interactions_collection = db['Interactions']
+lyrics_collection = db['Lyrics']
 
 
 async def get_database() -> Database:

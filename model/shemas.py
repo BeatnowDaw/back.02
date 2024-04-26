@@ -3,38 +3,68 @@ from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 
+class MusicBase(BaseModel):
+    user_id: str = Field(alias="user_id")
+    licenses: list[str] = Field(alias="license_id")
+    bpm: int = Field(alias="bpm")
+    genre_id: str = Field(alias="genre_id")
+    moods: list[str] = Field(alias="moods")
+    instruments: list[str] = Field(alias="instruments")
+    tag_id: list[str] = Field(alias="tags")
+    license_id: list[str] = Field(alias="licenses")
 
 # Schemas de Usuarios
 class User(BaseModel):
-    full_name: str = Field(alias="full_name")
+    full_name: Optional[str] = Field(alias="full_name")
     username: str = Field(alias="username")
-    email: str = Field(alias="email")
-    password: str = Field(alias="password")
-    
+    email: Optional[str] = Field(alias="email")
+    password: Optional[str] = Field(alias="password")
+
 class UserInDB(User):
-    id: Optional[str] = Field(default=None, alias='id')
+    id: Optional[str] = Field(default=None, alias='_id')
 
     @validator('id', pre=True, always=True)
     def convert_id(cls, v):
         return str(v) if isinstance(v, ObjectId) else v
 
 # Schemas de Publicaciones
+
 class Post(BaseModel):
     user_id: str = Field(alias="user_id")
     publication_date: datetime = Field(alias="publication_date")
     title: str = Field(alias="title")
     description: str = Field(alias="description")
-    beat_info: str = Field(alias="beat_info")
+    #beat_info: MusicBase._id = Field(alias="beat_info")
+class PostInDB(Post):
+    id: str = Field(alias='_id')
 
+    @validator('id', pre=True, always=True)
+    def convert_id(cls, v):
+        return str(v) if isinstance(v, ObjectId) else v
+
+class PostShowed(PostInDB):
+    likes: int = 0
+    dislikes: int = 0
+    saves: int = 0
+    creator_username: Optional[str] = Field(default=None, alias="creator_username")
+
+class NewPost(BaseModel):
+    title: Optional[str] = Field(alias="title")
+    description: Optional[str] = Field(alias="description")
 class Interactions(BaseModel):
     user_id: str = Field(alias="user_id")
     post_id: str = Field(alias="publication_id")
     like_date: Optional[datetime] = Field(default=None, alias="like_date")
     saved_date: Optional[datetime] = Field(default=None, alias="saved_date")
     dislike_date: Optional[datetime] = Field(default=None, alias="dislike_date")
+    #user: UserInDB = Field(alias="user")
 
-class PostInDB(Post):
-    _id: str
+
+class Lyrics(BaseModel):
+    user_id: str = Field(alias="user_id")
+    post_id: str = Field(alias="post_id")
+    title: str = Field(alias="title")
+    lyrics: str = Field(alias="lyrics")
 
 # Schemas para comprobar uso
 '''
@@ -63,15 +93,7 @@ class Instrument(BaseModel):
     name: str = Field(alias="name")
     description: str = Field(alias="description")
 
-class MusicBase(BaseModel):
-    user_id: str = Field(alias="user_id")
-    licenses: list[str] = Field(alias="license_id")
-    bpm: int = Field(alias="bpm")
-    genre_id: str = Field(alias="genre_id")
-    moods: list[str] = Field(alias="moods")
-    instruments: list[Instrument] = Field(alias="instruments")
-    tag_id: list[str] = Field(alias="tags")
-    license_id: list[str] = Field(alias="licenses")
+
 
 class Purchase(BaseModel):
     buyer_user_id: str = Field(alias="user_id")
