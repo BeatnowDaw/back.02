@@ -3,10 +3,11 @@ from pymongo.errors import PyMongoError
 from routes.users_routes import router as users_router
 from routes.posts_routes import router as posts_router
 from routes.interactions_routes import router as interactions_router
-from routes.lyrics_routes import router as lyrics_routes, handle_database_error
+from routes.lyrics_routes import router as lyrics_routes
 from routes.routes import router as routes_router
 from prometheus_client import start_http_server
 import uvicorn
+from config.db import handle_database_error
 
 # Iniciar la aplicación
 app = FastAPI()

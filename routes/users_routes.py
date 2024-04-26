@@ -41,7 +41,7 @@ async def register(user: User):
         exit_status = stderr.channel.recv_exit_status()
 
         if exit_status != 0:
-            raise HTTPException(status_code=500, detail="Error al crear la carpeta en el servidor remoto")
+            raise HTTPException(status_code=500, detail="Error creating the folder on the remote server")
     return {"_id": str(result.inserted_id)}
 
 # Recoger datos del usuario actual
@@ -109,7 +109,7 @@ async def get_liked_posts(current_user: User = Depends(get_current_user), db=Dep
 
 @router.get("/user-lyrics", response_model=List[Lyrics])
 async def get_user_lyrics(current_user: User = Depends(get_current_user), db=Depends(get_database)):
-    user_id = current_user.user_id
+    user_id = await get_user_id(current_user.username)
     user_lyrics = await lyrics_collection.find({"user_id": user_id}).to_list(None)
     return user_lyrics
 

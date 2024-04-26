@@ -2,10 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from bson import ObjectId
 from datetime import datetime
 from typing import List
-
 from requests import post
-
-from model.shemas import Post, UserInDB, PostInDB, PostShowed, NewPost
+from model.shemas import Post, PostInDB, PostShowed, NewPost
 from config.db import get_database, post_collection, users_collection, interactions_collection
 from config.security import get_current_user, get_user_id, get_username
 from model.shemas import User
@@ -19,7 +17,7 @@ router = APIRouter()
 async def create_publication(new_post: NewPost, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     if user_id == "Usuario no encontrado":
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail="User not found")
 
     post = Post(user_id=str(ObjectId(user_id)), publication_date=datetime.now(), **new_post.dict())
 
@@ -33,12 +31,14 @@ async def create_publication(new_post: NewPost, current_user: User = Depends(get
 
 
 @router.get("/{post_id}", response_model=PostShowed)
-async def read_publication(post_id: str, db=Depends(get_database)):
+async def read_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     post_dict = await post_collection.find_one({"_id": ObjectId(post_id)})
     if post_dict:
         postindb = Post(**post_dict)
         creator_name = await get_username(post_dict["user_id"])  # Use post_dict instead of post_id
-        post = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(), likes=await count_likes(post_id), dislikes=await count_dislikes(post_id), saves=await count_saved(post_id), creator_username=creator_name)
+        post = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(), likes=await count_likes(post_id), dislikes=await count_dislikes(post_id),
+                          saves=await count_saved(post_id), creator_username=creator_name,isLiked=await has_liked_post(post_id, current_user),
+                          isSaved=await has_saved_post(post_id, current_user))
         return post
     else:
         raise HTTPException(status_code=404, detail="Publication not found")
@@ -95,3 +95,13 @@ async def list_user_publications(username: str, current_user: User = Depends(get
         return user_publications
     else:
         raise HTTPException(status_code=404, detail="User has no publications")
+
+async def has_liked_post(post_id: str, current_user: User):
+    user_id = await get_user_id(current_user.username)
+    like_exists = await interactions_collection.count_documents({"user_id": user_id, "post_id": post_id, "like_date": {"$exists": True}})
+    return like_exists > 0
+
+async def has_saved_post(post_id: str, current_user: User):
+    user_id = await get_user_id(current_user.username)
+    saved_exists = await interactions_collection.count_documents({"user_id": user_id, "post_id": post_id, "saved_date": {"$exists": True}})
+    return saved_exists > 0

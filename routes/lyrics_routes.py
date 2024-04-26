@@ -1,36 +1,33 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
-from model.shemas import Lyrics, User
+from model.shemas import Lyrics, LyricsInDB, NewLyrics, User
 from config.security import get_current_user, get_user_id
 from config.db import get_database
 from pymongo.errors import PyMongoError
 from bson import ObjectId
+from config.db import get_database, lyrics_collection
 
 router = APIRouter()
 
-# Manejador de excepciones para errores de base de datos
-async def handle_database_error(exception: PyMongoError):
-    raise HTTPException(status_code=500, detail="Database error")
-
 # Obtener todas las letras del usuario actual
-@router.get("/user-lyrics", response_model=List[Lyrics])
+@router.get("/user", response_model=List[Lyrics])
 async def get_user_lyrics(current_user: User = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     try:
-        user_lyrics = await db.lyrics_collection.find({"user_id": user_id}).to_list(None)
+        user_lyrics = await lyrics_collection.find({"user_id": user_id}).to_list(None)
         return user_lyrics
     except PyMongoError as e:
         raise HTTPException(status_code=500, detail="Failed to fetch user lyrics") from e
 
-# Crear nueva letra
-@router.post("/", response_model=Lyrics)
-async def create_lyrics(lyrics: Lyrics, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+@router.post("/", response_model=LyricsInDB)
+async def create_lyrics(new_lyrics: NewLyrics, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     try:
-        lyrics_dict = lyrics.dict()
-        lyrics_dict["user_id"] = current_user.user_id
-        result = await db.lyrics_collection.insert_one(lyrics_dict)
-        lyrics.id = str(result.inserted_id)
-        return lyrics
+        lyrics_dict = new_lyrics.dict()
+        lyrics_dict['user_id'] = await get_user_id(current_user.username)
+        result = await lyrics_collection.insert_one(lyrics_dict)
+        inserted_id = str(result.inserted_id)  # Obtener el ObjectId y convertirlo a str
+        lyrics_out = LyricsInDB(**lyrics_dict, id=inserted_id)
+        return lyrics_out
     except PyMongoError as e:
         raise HTTPException(status_code=500, detail="Failed to create lyrics") from e
 
@@ -38,7 +35,7 @@ async def create_lyrics(lyrics: Lyrics, current_user: User = Depends(get_current
 @router.get("/{lyrics_id}", response_model=Lyrics)
 async def get_lyrics(lyrics_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     try:
-        lyrics = await db.lyrics_collection.find_one({"_id": ObjectId(lyrics_id), "user_id": current_user.user_id})
+        lyrics = await lyrics_collection.find_one({"_id": ObjectId(lyrics_id), "user_id":await get_user_id(current_user.username)})
         if lyrics:
             return lyrics
         else:
@@ -47,24 +44,35 @@ async def get_lyrics(lyrics_id: str, current_user: User = Depends(get_current_us
         raise HTTPException(status_code=500, detail="Failed to fetch lyrics") from e
 
 # Actualizar una letra por su ID
-@router.put("/{lyrics_id}", response_model=Lyrics)
-async def update_lyrics(lyrics_id: str, lyrics: Lyrics, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+@router.put("/{lyrics_id}", response_model=LyricsInDB)
+async def update_lyrics(lyrics_id: str, updated_lyrics: NewLyrics, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     try:
-        await db.lyrics_collection.update_one({"_id": ObjectId(lyrics_id), "user_id": current_user.user_id}, {"$set": lyrics.dict()})
-        return lyrics
+        user_id = await get_user_id(current_user.username)
+        lyrics_dict = updated_lyrics.dict()
+        result = await lyrics_collection.update_one({"_id": ObjectId(lyrics_id)}, {"$set": lyrics_dict})
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Lyrics not found")
+        
+        updated_lyrics_in_db = await lyrics_collection.find_one({"_id": ObjectId(lyrics_id)})
+        return LyricsInDB(**updated_lyrics_in_db, id=lyrics_id)
+    
     except PyMongoError as e:
         raise HTTPException(status_code=500, detail="Failed to update lyrics") from e
 
 # Eliminar una letra por su ID
-@router.delete("/{lyrics_id}", response_model=Lyrics)
+@router.delete("/{lyrics_id}", response_model=LyricsInDB)
 async def delete_lyrics(lyrics_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     try:
-        lyrics = await db.lyrics_collection.find_one_and_delete({"_id": ObjectId(lyrics_id), "user_id": current_user.user_id})
+        user_id = await get_user_id(current_user.username)
+        lyrics = await lyrics_collection.find_one_and_delete({"_id": ObjectId(lyrics_id), "user_id": user_id})
         if lyrics:
-            return lyrics
+            lyrics_in_db = LyricsInDB(**lyrics, id=str(lyrics_id))
+            return lyrics_in_db
         else:
             raise HTTPException(status_code=404, detail="Lyrics not found")
     except PyMongoError as e:
         raise HTTPException(status_code=500, detail="Failed to delete lyrics") from e
+
 
 

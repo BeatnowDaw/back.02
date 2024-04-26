@@ -13,6 +13,7 @@ async def check_interaction_exists(user_id: str, post_id: str, interaction_type:
     if interaction and interaction.get(interaction_type):
         raise HTTPException(status_code=400, detail=f"{interaction_type.capitalize()} already exists")
     return
+
 # Dar like a publicación
 @router.post("/like/{post_id}")
 async def add_like(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
