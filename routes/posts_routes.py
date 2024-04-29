@@ -1,8 +1,12 @@
+from config.security import SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
+    get_current_user, get_user_id
 import random
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from bson import ObjectId
 from datetime import datetime
 from typing import List
+from fastapi.responses import JSONResponse
+import paramiko
 from requests import post
 from model.shemas import Post, PostInDB, PostShowed, NewPost
 from config.db import get_database, post_collection, users_collection, interactions_collection
@@ -11,11 +15,72 @@ from model.shemas import User
 from routes.interactions_routes import count_likes, count_dislikes, count_saved
 
 router = APIRouter()
+@router.post("/upload-post", response_model=PostInDB)
+async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(), current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    # Validar el tipo de archivo antes de continuar
+    if not file.filename.lower().endswith('.jpg'):
+        raise HTTPException(status_code=415, detail="Only JPG files are allowed.")
+
+    # Obtener ID del usuario
+    user_id = await get_user_id(current_user.username)
+    if user_id == "Usuario no encontrado":
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Crear el post en la base de datos
+    post = Post(user_id=str(ObjectId(user_id)), publication_date=datetime.now(), **new_post.dict())
+    result = await post_collection.insert_one(post.dict())
+    if not result.inserted_id:
+        raise HTTPException(status_code=500, detail="Failed to create publication")
+
+    post_id = str(result.inserted_id)
+    post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}"
+
+    # Configuración de SSH
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
+
+        # Crear directorio para el post si no existe
+        directory_commands = f"sudo mkdir -p {post_dir}"
+        stdin, stdout, stderr = ssh.exec_command(directory_commands)
+        exit_status = stderr.channel.recv_exit_status()
+
+        if exit_status != 0:
+            raise Exception("Error creating the folder on the remote server")
+
+        # Guardar el archivo en el directorio del post
+        file_path = f"{post_dir}/caratula.jpg"
+        stdin, stdout, stderr = ssh.exec_command(f'cat > {file_path}')
+        stdin.write(await file.read())
+        ssh.close()
+            
+    except paramiko.SSHException as e:
+        await post_collection.delete_one({"_id": ObjectId(post_id)})
+        raise HTTPException(status_code=500, detail=f"SSH connection error: {str(e)}")
+    except Exception as e:
+        await post_collection.delete_one({"_id": ObjectId(post_id)})
+        raise HTTPException(status_code=500, detail=f"Failed to upload file and post deleted: {str(e)}")
+
+    return PostInDB(_id=post_id, **post.dict())
+'''
+@router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        file_location = f"/path/to/save/{file.filename}"
+
+        with open(file_location, "wb") as f:
+            f.write(contents)
+
+        return {"message": f"Successfully uploaded {file.filename}"}
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"message": f"Could not upload the file: {str(e)}"})
 
 
 # Crear publicación
-@router.post("/", response_model=PostInDB)
-async def create_publication(new_post: NewPost, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+#@router.post("/", response_model=PostInDB)
+async def create_publication_in_DB(new_post: NewPost, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     if user_id == "Usuario no encontrado":
         raise HTTPException(status_code=404, detail="User not found")
@@ -28,7 +93,7 @@ async def create_publication(new_post: NewPost, current_user: User = Depends(get
         return post_db
     else:
         raise HTTPException(status_code=500, detail="Failed to create publication")
-
+'''
 @router.get("/random-publication", response_model=PostShowed)
 async def get_random_publication(current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Fetch all post IDs

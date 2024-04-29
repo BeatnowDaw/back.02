@@ -43,7 +43,53 @@ async def register(user: User):
         if exit_status != 0:
             raise HTTPException(status_code=500, detail="Error creating the folder on the remote server")
     return {"_id": str(result.inserted_id)}
+@router.delete("/delete-user")
+async def delete_user(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
+    try:
+        # Conexión SSH
+        with paramiko.SSHClient() as ssh:
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
+
+            # Eliminar la carpeta del usuario en el servidor
+            user_dir = f"/var/www/html/beatnow/{current_user.username}"
+            ssh.exec_command(f"sudo rm -rf {user_dir}")
+
+            # Verificar si la carpeta se borró correctamente
+            _, stderr, _ = ssh.exec_command(f"test -d {user_dir}")
+            if stderr.channel.recv_exit_status() == 0:
+                raise HTTPException(status_code=500, detail="Error deleting user directory from server")
+
+        # Obtener el ID del usuario
+        user_id = await get_user_id(current_user.username)
+
+        # Obtener los IDs de los posts del usuario
+        user_posts = await lyrics_collection.find({"user_id": user_id}, {"_id": 1}).to_list(None)
+        post_ids = [post["_id"] for post in user_posts]
+
+        # Eliminar todas las interacciones asociadas a los posts del usuario
+        await interactions_collection.delete_many({"post_id": {"$in": post_ids}})
+
+        # Eliminar todos los posts del usuario
+        await lyrics_collection.delete_many({"user_id": user_id})
+
+        # Eliminar al usuario de la colección de usuarios
+        await users_collection.delete_one({"_id": user_id})
+
+    except paramiko.SSHException as e:
+        raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+    return {"message": "User deleted successfully"}
+   
 # Recoger datos del usuario actual
 @router.get("/users/me")
 async def read_users_me(
