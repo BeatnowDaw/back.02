@@ -1,3 +1,4 @@
+import os
 import shutil
 from config.security import SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, get_user_id
