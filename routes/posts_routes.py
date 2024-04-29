@@ -1,6 +1,8 @@
+import shutil
 from config.security import SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, get_user_id
 import random
+from scp import SCPClient
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from bson import ObjectId
 from datetime import datetime
@@ -15,6 +17,7 @@ from model.shemas import User
 from routes.interactions_routes import count_likes, count_dislikes, count_saved
 
 router = APIRouter()
+
 @router.post("/upload-post", response_model=PostInDB)
 async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(), current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Validar el tipo de archivo antes de continuar
@@ -49,10 +52,11 @@ async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(
         if exit_status != 0:
             raise Exception("Error creating the folder on the remote server")
 
-        # Guardar el archivo en el directorio del post
+        # Guardar el archivo en el directorio del post usando SSH
         file_path = f"{post_dir}/caratula.jpg"
-        stdin, stdout, stderr = ssh.exec_command(f'cat > {file_path}')
-        stdin.write(await file.read())
+        with ssh.open_sftp().file(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
         ssh.close()
             
     except paramiko.SSHException as e:
@@ -183,3 +187,60 @@ async def has_saved_post(post_id: str, current_user: User):
     user_id = await get_user_id(current_user.username)
     saved_exists = await interactions_collection.count_documents({"user_id": user_id, "post_id": post_id, "saved_date": {"$exists": True}})
     return saved_exists > 0
+
+@router.post("/change_post_cover/{post_id}")
+async def change_post_cover(post_id: str, file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        # Obtener el post
+        post = await lyrics_collection.find_one({"_id": post_id})
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+
+        # Verificar si el usuario tiene permisos para editar el post
+        if post["user_id"] != current_user.id:
+            raise HTTPException(status_code=403, detail="Unauthorized to edit this post")
+
+        # Guardar la nueva carátula con un nombre único y formato png
+        file_path = os.path.join("/var/www/html/beatnow", current_user.username, "posts", post_id, "cover.png")
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+    return {"message": "Post cover updated successfully"}
+
+@router.post("/delete_post_cover/{post_id}")
+async def delete_post_cover(post_id: str, current_user: User = Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        # Obtener el post
+        post = await post_collection.find_one({"_id": post_id})
+        if not post:
+            raise HTTPException(status_code=404, detail="Post not found")
+
+        # Verificar si el usuario tiene permisos para editar el post
+        if post["user_id"] != current_user.id:
+            raise HTTPException(status_code=403, detail="Unauthorized to edit this post")
+
+        # Eliminar la carátula del post
+        post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}"
+        os.remove(os.path.join(post_dir, "cover.png"))
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+    return {"message": "Post cover deleted successfully"}
