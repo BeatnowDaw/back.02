@@ -52,7 +52,7 @@ async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(
                 ssh.exec_command(f"sudo chown -R $USER:$USER {post_dir}")
 
             # Guardar la nueva foto de perfil con un nombre único y formato png
-            file_path = os.path.join(post_dir, "photo_profile.png")
+            file_path = os.path.join(post_dir, "caratula.jpg")
             with ssh.open_sftp().file(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
