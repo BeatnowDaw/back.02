@@ -1,3 +1,4 @@
+import random
 from fastapi import APIRouter, HTTPException, Depends
 from bson import ObjectId
 from datetime import datetime
@@ -28,7 +29,19 @@ async def create_publication(new_post: NewPost, current_user: User = Depends(get
     else:
         raise HTTPException(status_code=500, detail="Failed to create publication")
 
+@router.get("/random-publication", response_model=PostShowed)
+async def get_random_publication(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    # Fetch all post IDs
+    post_ids = await post_collection.find({}, {"_id": 1}).to_list(length=None)
 
+    if not post_ids:
+        raise HTTPException(status_code=404, detail="No publications found")
+
+    # Select a random ID from the list
+    random_post_id = random.choice(post_ids)['_id']
+
+    # Use the existing read_publication function to fetch and return the publication details
+    return await read_publication(str(random_post_id), current_user, db)
 
 @router.get("/{post_id}", response_model=PostShowed)
 async def read_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
