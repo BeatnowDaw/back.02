@@ -2,7 +2,6 @@ import shutil
 from config.security import SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, get_user_id
 import random
-from scp import SCPClient
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from bson import ObjectId
 from datetime import datetime
