@@ -35,35 +35,30 @@ async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(
         raise HTTPException(status_code=500, detail="Failed to create publication")
 
     post_id = str(result.inserted_id)
-    post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}"
+    post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}/"
 
     # Configuración de SSH
     try:
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
+        # Conexión SSH
+        with paramiko.SSHClient() as ssh:
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
-        # Crear directorio para el post si no existe
-        directory_commands = f"sudo mkdir -p {post_dir}"
-        stdin, stdout, stderr = ssh.exec_command(directory_commands)
-        exit_status = stderr.channel.recv_exit_status()
+            # Verificar si el directorio del usuario existe, si no, crearlo
+            if not ssh.exec_command(f"test -d {post_dir}")[1].read():
+                # Crear directorios en el servidor remoto
+                ssh.exec_command(f"sudo mkdir -p {post_dir}")
+                ssh.exec_command(f"sudo chown -R $USER:$USER {post_dir}")
 
-        if exit_status != 0:
-            raise Exception("Error creating the folder on the remote server")
+            # Guardar la nueva foto de perfil con un nombre único y formato png
+            file_path = os.path.join(post_dir, "photo_profile.png")
+            with ssh.open_sftp().file(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
 
-        # Guardar el archivo en el directorio del post usando SSH
-        file_path = f"{post_dir}/caratula.jpg"
-        with ssh.open_sftp().file(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        ssh.close()
-            
     except paramiko.SSHException as e:
-        await post_collection.delete_one({"_id": ObjectId(post_id)})
-        raise HTTPException(status_code=500, detail=f"SSH connection error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
     except Exception as e:
-        await post_collection.delete_one({"_id": ObjectId(post_id)})
-        raise HTTPException(status_code=500, detail=f"Failed to upload file and post deleted: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
     return PostInDB(_id=post_id, **post.dict())
 '''
