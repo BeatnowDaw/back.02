@@ -19,9 +19,7 @@ class User(BaseModel):
     username: str = Field(alias="username")
     email: Optional[str] = Field(alias="email")
     password: Optional[str] = Field(alias="password")
-    followers: Optional[list[str]] = Field(alias="followers")
-    following: Optional[list[str]] = Field(alias="following")
-    
+
 
 class UserInDB(User):
     id: Optional[str] = Field(default=None, alias='_id')
@@ -29,6 +27,10 @@ class UserInDB(User):
     @validator('id', pre=True, always=True)
     def convert_id(cls, v):
         return str(v) if isinstance(v, ObjectId) else v
+
+class UserInfo(UserInDB):
+    followers: Optional[list[str]] = Field(alias="followers")
+    following: Optional[list[str]] = Field(alias="following")
 
 # Schemas de Publicaciones
 class NewPost(BaseModel):
