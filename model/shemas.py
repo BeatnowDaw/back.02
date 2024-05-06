@@ -19,6 +19,9 @@ class User(BaseModel):
     username: str = Field(alias="username")
     email: Optional[str] = Field(alias="email")
     password: Optional[str] = Field(alias="password")
+    followers: Optional[list[str]] = Field(alias="followers")
+    following: Optional[list[str]] = Field(alias="following")
+    
 
 class UserInDB(User):
     id: Optional[str] = Field(default=None, alias='_id')
