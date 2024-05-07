@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, Security
 from datetime import datetime
-from config.db import get_database, post_collection, users_collection, interactions_collection
+from config.db import get_database, interactions_collection
 from config.security import get_current_user, get_user_id, check_post_exists, decode_token
-from model.shemas import User
+from model.user_shemas import User
 
 # Iniciar router
 router = APIRouter()

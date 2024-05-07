@@ -7,13 +7,12 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from bson import ObjectId
 from datetime import datetime
 from typing import List
-from fastapi.responses import JSONResponse
 import paramiko
 from requests import post
-from model.shemas import Post, PostInDB, PostShowed, NewPost
+from model.post_shemas import Post, PostInDB, PostShowed, NewPost
 from config.db import get_database, post_collection, users_collection, interactions_collection
 from config.security import get_current_user, get_user_id, get_username
-from model.shemas import User
+from model.user_shemas import User
 from routes.interactions_routes import count_likes, count_dislikes, count_saved
 
 router = APIRouter()
@@ -62,37 +61,7 @@ async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
     return PostInDB(_id=post_id, **post.dict())
-'''
-@router.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
-    try:
-        contents = await file.read()
-        file_location = f"/path/to/save/{file.filename}"
 
-        with open(file_location, "wb") as f:
-            f.write(contents)
-
-        return {"message": f"Successfully uploaded {file.filename}"}
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"message": f"Could not upload the file: {str(e)}"})
-
-
-# Crear publicación
-#@router.post("/", response_model=PostInDB)
-async def create_publication_in_DB(new_post: NewPost, current_user: User = Depends(get_current_user), db=Depends(get_database)):
-    user_id = await get_user_id(current_user.username)
-    if user_id == "Usuario no encontrado":
-        raise HTTPException(status_code=404, detail="User not found")
-
-    post = Post(user_id=str(ObjectId(user_id)), publication_date=datetime.now(), **new_post.dict())
-
-    result = await post_collection.insert_one(post.dict())  # Convert the post object to a dictionary
-    if result.inserted_id:
-        post_db = PostInDB(_id=str(result.inserted_id), **post.dict())  # Convertir ObjectId a string para el retorno
-        return post_db
-    else:
-        raise HTTPException(status_code=500, detail="Failed to create publication")
-'''
 @router.get("/random-publication", response_model=PostShowed)
 async def get_random_publication(current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Fetch all post IDs

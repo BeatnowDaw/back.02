@@ -3,10 +3,10 @@ from email.header import Header
 import os
 from typing import Annotated, List
 import shutil
-from typing import Annotated
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
-from model.shemas import User, Lyrics
+from model.user_shemas import User
+from model.lyrics_shemas import Lyrics
 from config.security import oauth2_scheme, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
 from config.db import users_collection, interactions_collection, get_database, lyrics_collection
@@ -43,6 +43,7 @@ async def register(user: User):
         if exit_status != 0:
             raise HTTPException(status_code=500, detail="Error creating the folder on the remote server")
     return {"_id": str(result.inserted_id)}
+
 @router.delete("/delete-user")
 async def delete_user(current_user: User = Depends(get_current_user), db=Depends(get_database)):
     if not current_user:
@@ -158,34 +159,7 @@ async def get_user_lyrics(current_user: User = Depends(get_current_user), db=Dep
     user_id = await get_user_id(current_user.username)
     user_lyrics = await lyrics_collection.find({"user_id": user_id}).to_list(None)
     return user_lyrics
-@router.post("/change_post_cover/{post_id}")
-async def change_post_cover(post_id: str, file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
-    try:
-        # Obtener el post
-        post = await lyrics_collection.find_one({"_id": post_id})
-        if not post:
-            raise HTTPException(status_code=404, detail="Post not found")
-
-        # Verificar si el usuario tiene permisos para editar el post
-        if post["user_id"] != current_user.id:
-            raise HTTPException(status_code=403, detail="Unauthorized to edit this post")
-
-        # Guardar la nueva carátula con un nombre único y formato png
-        file_path = os.path.join("/var/www/html/beatnow", current_user.username, "posts", post_id, "cover.png")
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-    return {"message": "Post cover updated successfully"}
 
 @router.post("/delete_photo_profile")
 async def delete_photo_profile(current_user: User = Depends(get_current_user)):
@@ -217,33 +191,6 @@ async def delete_photo_profile(current_user: User = Depends(get_current_user)):
 
     return {"message": "Photo profile deleted successfully"}
 
-@router.post("/delete_post_cover/{post_id}")
-async def delete_post_cover(post_id: str, current_user: User = Depends(get_current_user)):
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    try:
-        # Obtener el post
-        post = await lyrics_collection.find_one({"_id": post_id})
-        if not post:
-            raise HTTPException(status_code=404, detail="Post not found")
-
-        # Verificar si el usuario tiene permisos para editar el post
-        if post["user_id"] != current_user.id:
-            raise HTTPException(status_code=403, detail="Unauthorized to edit this post")
-
-        # Eliminar la carátula del post
-        post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}"
-        os.remove(os.path.join(post_dir, "cover.png"))
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-    return {"message": "Post cover deleted successfully"}
 
 @router.post("/change_photo_profile")
 async def change_photo_profile(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):

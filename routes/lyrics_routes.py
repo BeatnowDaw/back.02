@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
-from model.shemas import Lyrics, LyricsInDB, NewLyrics, User
+from model.lyrics_shemas import Lyrics, LyricsInDB, NewLyrics
+from model.user_shemas import User
 from config.security import get_current_user, get_user_id
 from config.db import get_database
 from pymongo.errors import PyMongoError

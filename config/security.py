@@ -8,7 +8,7 @@ import logging
 from prometheus_client import Counter
 from config.db import users_collection, post_collection
 from datetime import datetime, timedelta
-from model.shemas import User
+from model.user_shemas import User
 from config.db import users_collection
 import jwt
 

@@ -1,7 +1,7 @@
 from datetime import timedelta
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
-from model.shemas import User
+from model.user_shemas import User
 from config.security import guardar_log, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user
 from config.db import users_collection
 from fastapi.security import OAuth2PasswordRequestForm
