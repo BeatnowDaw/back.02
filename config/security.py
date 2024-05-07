@@ -8,7 +8,7 @@ import logging
 from prometheus_client import Counter
 from config.db import users_collection, post_collection
 from datetime import datetime, timedelta
-from model.user_shemas import User
+from model.user_shemas import NewUser
 from config.db import users_collection
 import jwt
 
@@ -30,15 +30,15 @@ logging.basicConfig(filename='app.log', level=logging.INFO)
 # Configuración de Prometheus
 requests_counter = Counter('requests_total', 'Total number of requests')
 
-async def get_user(username: str) -> Optional[User]:
+async def get_user(username: str) -> Optional[NewUser]:
     try:
         user = await users_collection.find_one({"username": username})
         if user:
-            return User(**user)
+            return NewUser(**user)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Database error")
 
-async def decode_token(token: str) -> Optional[User]:
+async def decode_token(token: str) -> Optional[NewUser]:
     try:
         # Decodifica el token y valida
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])

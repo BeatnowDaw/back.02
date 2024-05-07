@@ -2,19 +2,26 @@ from datetime import datetime
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from model.follow_shemas import Follow
+from model.user_shemas import NewUser
 from config.db import follows_collection, get_database
+from config.security import get_current_user, get_user_id
 
 router = APIRouter()
 
+@router.post("/follow/{user_id}", response_model=Follow, status_code=status.HTTP_201_CREATED)
+async def create_follow(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
+    # Verificar si ya existe una relación de seguimiento entre los usuarios
+    user_id_following = await get_user_id(current_user.username)
+    existing_follow = await follows_collection.find_one({"user_id_followed": user_id, "user_id_following": user_id_following})
+    if existing_follow:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already following this user")
 
-@router.post("/", response_model=Follow, status_code=status.HTTP_201_CREATED)
-async def create_follow(follow: Follow, db=Depends(get_database)):
-    follow_dict = follow.dict()
-    follow_dict["follow_date"] = datetime.utcnow()
+    # Crear una nueva relación de seguimiento
+    follow_dict = Follow(user_id_followed=user_id, user_id_following=user_id_following, follow_date=datetime.utcnow()).dict()
     result = await follows_collection.insert_one(follow_dict)
     follow_id = str(result.inserted_id)
-    return {**follow.dict(), "_id": follow_id}
-
+    return {**follow_dict, "_id": follow_id}
+'''
 @router.get("/{follow_id}", response_model=Follow)
 async def read_follow(follow_id: str, db=Depends(get_database)):
     follow = await follows_collection.find_one({"_id": follow_id})
@@ -32,25 +39,39 @@ async def update_follow(follow_id: str, follow: Follow, db=Depends(get_database)
     updated_follow = {**existing_follow, **follow.dict()}
     await follows_collection.replace_one({"_id": follow_id}, updated_follow)
     return updated_follow
+'''
 
-@router.delete("/{follow_id}")
-async def delete_follow(follow_id: str, db=Depends(get_database)):
-    delete_result = await follows_collection.delete_one({"_id": follow_id})
-    if delete_result.deleted_count == 1:
-        return {"message": "Follow deleted successfully"}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Follow not found")
+@router.delete("/unfollow/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_follow(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
+    # Obtener los IDs de usuario
+    user_id_following = await get_user_id(current_user.username)
+    user_id_followed = user_id
+    
+    # Eliminar la relación de seguimiento si existe
+    result = await follows_collection.delete_one({"user_id_following": user_id_following, "user_id_followed": user_id_followed})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Follow not found")
 
-@router.get("/count/{user_id_followed}")
-async def count_followers(user_id_followed: str, db=Depends(get_database)):
+#@router.get("/count/{user_id_followed}")
+async def count_followers(user_id_followed: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     count = await follows_collection.count_documents({"user_id_followed": user_id_followed})
     return {"user_id_followed": user_id_followed, "followers_count": count}
 
-@router.get("/followers/{user_id_followed}")
-async def get_followers(user_id_followed: str, db=Depends(get_database)):
+#@router.get("/followers/{user_id_followed}")
+async def get_followers(user_id_followed: str,  db=Depends(get_database)):
     followers = await follows_collection.find({"user_id_followed": user_id_followed}).to_list(None)
     return followers
 
-@router.get("/following/{user_id_following}")
-async def get_following(user_id_following: str, db=Depends(get_database)):
+#@router.get("/following/{user_id_following}")
+async def get_following(user_id_following: str,db=Depends(get_database)):
     following = await follows_collection.find({"user_id_following": user_id_following}).to_list(None)
     return following
+
+async def is_following(user_id: str, db=Depends(get_database)):
+    # Obtener los IDs de usuario
+    user_id_following = await get_user_id(current_user.username)
+    user_id_followed = user_id
+    
+    # Verificar si existe la relación de seguimiento
+    follow = await follows_collection.find_one({"user_id_following": user_id_following, "user_id_followed": user_id_followed})
+    return follow is not None

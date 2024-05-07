@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from model.lyrics_shemas import Lyrics, LyricsInDB, NewLyrics
-from model.user_shemas import User
+from model.user_shemas import NewUser
 from config.security import get_current_user, get_user_id
 from config.db import get_database
 from pymongo.errors import PyMongoError
@@ -12,7 +12,7 @@ router = APIRouter()
 
 # Obtener todas las letras del usuario actual
 @router.get("/user", response_model=List[Lyrics])
-async def get_user_lyrics(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     try:
         user_lyrics = await lyrics_collection.find({"user_id": user_id}).to_list(None)
@@ -21,7 +21,7 @@ async def get_user_lyrics(current_user: User = Depends(get_current_user), db=Dep
         raise HTTPException(status_code=500, detail="Failed to fetch user lyrics") from e
 
 @router.post("/", response_model=LyricsInDB)
-async def create_lyrics(new_lyrics: NewLyrics, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def create_lyrics(new_lyrics: NewLyrics, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     try:
         lyrics_dict = new_lyrics.dict()
         lyrics_dict['user_id'] = await get_user_id(current_user.username)
@@ -34,7 +34,7 @@ async def create_lyrics(new_lyrics: NewLyrics, current_user: User = Depends(get_
 
 # Obtener una letra por su ID
 @router.get("/{lyrics_id}", response_model=Lyrics)
-async def get_lyrics(lyrics_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def get_lyrics(lyrics_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     try:
         lyrics = await lyrics_collection.find_one({"_id": ObjectId(lyrics_id), "user_id":await get_user_id(current_user.username)})
         if lyrics:
@@ -46,7 +46,7 @@ async def get_lyrics(lyrics_id: str, current_user: User = Depends(get_current_us
 
 # Actualizar una letra por su ID
 @router.put("/{lyrics_id}", response_model=LyricsInDB)
-async def update_lyrics(lyrics_id: str, updated_lyrics: NewLyrics, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def update_lyrics(lyrics_id: str, updated_lyrics: NewLyrics, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     try:
         user_id = await get_user_id(current_user.username)
         lyrics_dict = updated_lyrics.dict()
@@ -63,7 +63,7 @@ async def update_lyrics(lyrics_id: str, updated_lyrics: NewLyrics, current_user:
 
 # Eliminar una letra por su ID
 @router.delete("/{lyrics_id}", response_model=LyricsInDB)
-async def delete_lyrics(lyrics_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def delete_lyrics(lyrics_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     try:
         user_id = await get_user_id(current_user.username)
         lyrics = await lyrics_collection.find_one_and_delete({"_id": ObjectId(lyrics_id), "user_id": user_id})

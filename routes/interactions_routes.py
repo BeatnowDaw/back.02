@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Security
 from datetime import datetime
 from config.db import get_database, interactions_collection
 from config.security import get_current_user, get_user_id, check_post_exists, decode_token
-from model.user_shemas import User
+from model.user_shemas import NewUser
 
 # Iniciar router
 router = APIRouter()
@@ -16,7 +16,7 @@ async def check_interaction_exists(user_id: str, post_id: str, interaction_type:
 
 # Dar like a publicación
 @router.post("/like/{post_id}")
-async def add_like(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def add_like(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
     await check_interaction_exists(user_id, post_id, "like_date", db)
@@ -31,7 +31,7 @@ async def add_like(post_id: str, current_user: User = Depends(get_current_user),
 
 # Guardar publicación
 @router.post("/save/{post_id}")
-async def save_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def save_publication(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
     await check_interaction_exists(user_id, post_id, "saved_date", db)
@@ -46,7 +46,7 @@ async def save_publication(post_id: str, current_user: User = Depends(get_curren
 
 # Dar dislike a publicación
 @router.post("/dislike/{post_id}")
-async def add_dislike(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def add_dislike(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
     await check_interaction_exists(user_id, post_id, "dislike_date", db)
@@ -60,7 +60,7 @@ async def add_dislike(post_id: str, current_user: User = Depends(get_current_use
     return {"message": "Dislike added successfully"}
 # Quitar like a publicación
 @router.post("/unlike/{post_id}")
-async def remove_like(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def remove_like(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
     result = await interactions_collection.update_one(
@@ -73,7 +73,7 @@ async def remove_like(post_id: str, current_user: User = Depends(get_current_use
 
 # Quitar de guardados una publicación
 @router.post("/unsave/{post_id}")
-async def remove_saved(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def remove_saved(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
     result = await interactions_collection.update_one(
@@ -86,7 +86,7 @@ async def remove_saved(post_id: str, current_user: User = Depends(get_current_us
 
 # Quitar dislike a publicación
 @router.post("/undislike/{post_id}")
-async def remove_dislike(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def remove_dislike(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
     result = await interactions_collection.update_one(
@@ -129,5 +129,5 @@ async def count_dislikes(post_id: str, db=Depends(get_database)):
         return 0
 
 @router.get("/protected-route")
-async def protected_route(current_user: User = Security(decode_token, scopes=["base"])):
+async def protected_route(current_user: NewUser = Security(decode_token, scopes=["base"])):
     return {"message": "Hello, secured world!", "user": current_user.username}

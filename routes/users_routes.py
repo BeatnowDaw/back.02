@@ -3,23 +3,26 @@ from email.header import Header
 import os
 from typing import Annotated, List
 import shutil
+from bson import ObjectId
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
-from model.user_shemas import User
+from model.user_shemas import NewUser, User, UserProfile
 from model.lyrics_shemas import Lyrics
 from config.security import oauth2_scheme, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
-from config.db import users_collection, interactions_collection, get_database, lyrics_collection
+from config.db import users_collection, interactions_collection, get_database, lyrics_collection, follows_collection
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import File, HTTPException, Depends, UploadFile, status, APIRouter
 import paramiko
+from routes.follow_routes import get_followers, get_following
+from routes.posts_routes import list_user_publications
 
 # Iniciar router
 router = APIRouter()
 
 # Registro
 @router.post("/register")
-async def register(user: User):
+async def register(user: NewUser):
     # Check if the username is already taken
     existing_user = await users_collection.find_one({"username": user.username})
     if existing_user:
@@ -45,7 +48,7 @@ async def register(user: User):
     return {"_id": str(result.inserted_id)}
 
 @router.delete("/delete-user")
-async def delete_user(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def delete_user(current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -78,6 +81,9 @@ async def delete_user(current_user: User = Depends(get_current_user), db=Depends
         # Eliminar todas las interacciones asociadas a los posts del usuario
         await interactions_collection.delete_many({"post_id": {"$in": post_ids}})
 
+        # Eliminar todas las interacciones hachas por el usuario
+        await interactions_collection.delete_many({"user_id": user_id})
+
         # Eliminar todos los posts del usuario
         await lyrics_collection.delete_many({"user_id": user_id})
 
@@ -94,10 +100,11 @@ async def delete_user(current_user: User = Depends(get_current_user), db=Depends
 # Recoger datos del usuario actual
 @router.get("/users/me")
 async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[NewUser, Depends(get_current_user)],
 ):
     return current_user
 
+'''
 #Listar todos los usuarios
 @router.get("/users")
 async def get_all_users(token: str = Depends(oauth2_scheme)):
@@ -117,7 +124,7 @@ async def get_all_users(token: str = Depends(oauth2_scheme)):
     all_users = await users_collection.find({}, {"username": 1, "_id": 0}).to_list(length=None)
     usernames = [user["username"] for user in all_users]
     return {"usernames": usernames}
-
+'''
 @router.post("/login")  # Additional route
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user_dict = await users_collection.find_one({"username": form_data.username})
@@ -125,7 +132,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         guardar_log("Login failed - Incorrect username: " + form_data.username)
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-    user = User(**user_dict)
+    user = NewUser(**user_dict)
     if not bcrypt.checkpw(form_data.password.encode('utf-8'), user_dict['password']):
         guardar_log("Login failed - Incorrect password for username: " + form_data.username)
         raise HTTPException(status_code=400, detail="Incorrect username or password")
@@ -142,27 +149,48 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"message": "ok"}
 
 @router.get("/saved-posts")
-async def get_saved_posts(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def get_saved_posts(current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     saved_posts = await interactions_collection.find({"user_id": user_id, "saved_date": {"$exists": True}}).to_list(None)
     return {"saved_posts": saved_posts}
 
 # Obtener todas las publicaciones likeadas por el usuario
 @router.get("/liked-posts")
-async def get_liked_posts(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def get_liked_posts(current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     liked_posts = await interactions_collection.find({"user_id": user_id, "like_date": {"$exists": True}}).to_list(None)
     return {"liked_posts": liked_posts}
 
-@router.get("/user-lyrics", response_model=List[Lyrics])
-async def get_user_lyrics(current_user: User = Depends(get_current_user), db=Depends(get_database)):
+@router.get("/lyrics", response_model=List[Lyrics])
+async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     user_lyrics = await lyrics_collection.find({"user_id": user_id}).to_list(None)
     return user_lyrics
 
 
+@router.get("/profile/{user_id}", response_model=UserProfile)
+async def get_user_lyrics(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
+    user_dict = await users_collection.find_one({"_id": ObjectId(user_id)})
+    if user_dict:
+        userindb = User(**user_dict)
+        user_id_following = await get_user_id(current_user.username)
+        if user_id_following:
+            isFollowing = 0
+        else:
+            
+            existing_follow = await follows_collection.find_one({"user_id_followed": user_id, "user_id_following": user_id_following})
+            if existing_follow:
+                isFollowing = 1
+            else:
+                isFollowing = -1
+        profile = UserProfile(**userindb.dict(),_id=str(ObjectId(user_id)),  followers = await get_followers(user_id), following = await get_following(user_id),
+                          post_num = await lyrics_collection.count_documents({"user_id": user_id}), post= await list_user_publications(user_id), is_following = isFollowing )
+        return profile
+    else:
+        raise HTTPException(status_code=404, detail="User id not Found")
+
 @router.post("/delete_photo_profile")
-async def delete_photo_profile(current_user: User = Depends(get_current_user)):
+async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -193,7 +221,7 @@ async def delete_photo_profile(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/change_photo_profile")
-async def change_photo_profile(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+async def change_photo_profile(file: UploadFile = File(...), current_user: NewUser = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

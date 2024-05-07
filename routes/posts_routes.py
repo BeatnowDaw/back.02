@@ -208,3 +208,12 @@ async def delete_post_cover(post_id: str, current_user: User = Depends(get_curre
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
     return {"message": "Post cover deleted successfully"}
+
+async def count_user_posts(user_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    # Verificar si el usuario tiene permisos para ver las publicaciones del usuario
+    if user_id != await get_user_id(current_user.username):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    # Contar las publicaciones del usuario
+    count = await post_collection.count_documents({"user_id": user_id})
+    return count

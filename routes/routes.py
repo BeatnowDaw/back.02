@@ -1,7 +1,7 @@
 from datetime import timedelta
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
-from model.user_shemas import User
+from model.user_shemas import NewUser
 from config.security import guardar_log, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user
 from config.db import users_collection
 from fastapi.security import OAuth2PasswordRequestForm
@@ -18,7 +18,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         guardar_log("Login failed - Incorrect username: " + form_data.username)
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-    user = User(**user_dict)
+    user = NewUser(**user_dict)
     if not bcrypt.checkpw(form_data.password.encode('utf-8'), user_dict['password']):
         guardar_log("Login failed - Incorrect password for username: " + form_data.username)
         raise HTTPException(status_code=400, detail="Incorrect username or password")

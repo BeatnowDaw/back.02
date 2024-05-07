@@ -8,6 +8,7 @@ users_collection = db['Users']
 post_collection = db['Posts']
 interactions_collection = db['Interactions']
 lyrics_collection = db['Lyrics']
+follows_collection = db['Follows']
 
 
 async def get_database() -> Database:
