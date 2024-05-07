@@ -8,9 +8,21 @@ from routes.routes import router as routes_router
 from prometheus_client import start_http_server
 import uvicorn
 from config.db import handle_database_error
+from fastapi.middleware.cors import CORSMiddleware
 
 # Iniciar la aplicación
 app = FastAPI()
+
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 
 # Incluir los routers
 app.include_router(users_router, prefix="/v1/api/users")
