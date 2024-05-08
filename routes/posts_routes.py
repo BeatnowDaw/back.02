@@ -3,14 +3,14 @@ import shutil
 from config.security import SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, get_user_id
 import random
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, Path, UploadFile, File
 from bson import ObjectId
 from datetime import datetime
 from typing import List
 import paramiko
 from requests import post
 from model.post_shemas import Post, PostInDB, PostShowed, NewPost
-from config.db import get_database, post_collection, users_collection, interactions_collection
+from config.db import get_database, post_collection, users_collection, interactions_collection, lyrics_collection
 from config.security import get_current_user, get_user_id, get_username
 from model.user_shemas import User
 from routes.interactions_routes import count_likes, count_dislikes, count_saved
@@ -18,10 +18,24 @@ from routes.interactions_routes import count_likes, count_dislikes, count_saved
 router = APIRouter()
 
 @router.post("/upload-post", response_model=PostInDB)
-async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(), current_user: User = Depends(get_current_user), db=Depends(get_database)):
+async def upload_post(
+    file: UploadFile = File(...),
+    audio_file: UploadFile = File(...),
+    new_post: NewPost = Depends(),
+    current_user: User = Depends(get_current_user),
+    db=Depends(get_database)
+):
     # Validar el tipo de archivo antes de continuar
-    if not file.filename.lower().endswith('.jpg'):
-        raise HTTPException(status_code=415, detail="Only JPG files are allowed.")
+    allowed_image_extensions = {".jpg", ".jpeg"}
+    allowed_audio_extensions = {".mp3", ".wav"}
+    
+    if not file.filename.lower().endswith(tuple(allowed_image_extensions)):
+        raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
+
+    if audio_file:
+        if not audio_file.filename.lower().endswith(tuple(allowed_audio_extensions)):
+            raise HTTPException(status_code=415, detail="Only MP3/WAV files are allowed for audio.")
+    
 
     # Obtener ID del usuario
     user_id = await get_user_id(current_user.username)
@@ -37,9 +51,8 @@ async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(
     post_id = str(result.inserted_id)
     post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}/"
 
-    # Configuración de SSH
     try:
-        # Conexión SSH
+        # Configuración de SSH
         with paramiko.SSHClient() as ssh:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
@@ -54,6 +67,16 @@ async def upload_post(file: UploadFile = File(...), new_post: NewPost = Depends(
             file_path = os.path.join(post_dir, "caratula.jpg")
             with ssh.open_sftp().file(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
+
+            # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
+            if audio_file:
+                if audio_file.filename.lower().endswith(".mp3"):
+                    audio_filename = "beat.mp3" 
+                else :
+                    audio_filename = "beat.wav"
+                audio_file_path = os.path.join(post_dir, audio_filename)
+                with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
+                    shutil.copyfileobj(audio_file.file, buffer)
 
     except paramiko.SSHException as e:
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
@@ -109,7 +132,7 @@ async def update_publication(post_id: str, publication: NewPost, current_user: U
     else:
         raise HTTPException(status_code=404, detail="Publication not found")
 
-
+#no elimina la publicacion de la base de d
 # Eliminar publicación por ID
 @router.delete("/{post_id}")
 async def delete_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
@@ -117,6 +140,8 @@ async def delete_publication(post_id: str, current_user: User = Depends(get_curr
     if existing_publication:
         if existing_publication["user_id"] != await get_user_id(current_user.username):
             raise HTTPException(status_code=403, detail="You are not authorized to delete this publication")
+        await interactions_collection.delete_many({"post_id:": post_id})
+        await lyrics_collection.update_many({"post_id:": post_id},{ "$set": { "post_id": "None" } })
         result = await post_collection.delete_one({"_id": ObjectId(post_id)})
         if result.deleted_count == 1:
             return {"message": "Publication deleted successfully"}
