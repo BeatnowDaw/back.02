@@ -14,8 +14,12 @@ from config.db import get_database, post_collection, users_collection, interacti
 from config.security import get_current_user, get_user_id, get_username
 from model.user_shemas import User
 from routes.interactions_routes import count_likes, count_dislikes, count_saved
+from pydub import AudioSegment
+from pydub.utils import mediainfo
+from fastapi import File, UploadFile
 
 router = APIRouter()
+
 
 @router.post("/upload-post", response_model=PostInDB)
 async def upload_post(
@@ -27,7 +31,7 @@ async def upload_post(
 ):
     # Validar el tipo de archivo antes de continuar
     allowed_image_extensions = {".jpg", ".jpeg"}
-    allowed_audio_extensions = {".mp3", ".wav"}
+    allowed_audio_extensions = {".wav", ".mp3"}
     
     if not file.filename.lower().endswith(tuple(allowed_image_extensions)):
         raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
@@ -35,7 +39,6 @@ async def upload_post(
     if audio_file:
         if not audio_file.filename.lower().endswith(tuple(allowed_audio_extensions)):
             raise HTTPException(status_code=415, detail="Only MP3/WAV files are allowed for audio.")
-    
 
     # Obtener ID del usuario
     user_id = await get_user_id(current_user.username)
@@ -43,7 +46,12 @@ async def upload_post(
         raise HTTPException(status_code=404, detail="User not found")
 
     # Crear el post en la base de datos
-    post = Post(user_id=str(ObjectId(user_id)), publication_date=datetime.now(), **new_post.dict())
+    post = Post(
+        user_id=str(ObjectId(user_id)),
+        publication_date=datetime.now(),
+        title=new_post.title,
+        description=new_post.description
+    )
     result = await post_collection.insert_one(post.dict())
     if not result.inserted_id:
         raise HTTPException(status_code=500, detail="Failed to create publication")
@@ -70,13 +78,13 @@ async def upload_post(
 
             # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
             if audio_file:
-                if audio_file.filename.lower().endswith(".mp3"):
-                    audio_filename = "beat.mp3" 
-                else :
-                    audio_filename = "beat.wav"
-                audio_file_path = os.path.join(post_dir, audio_filename)
-                with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
-                    shutil.copyfileobj(audio_file.file, buffer)
+                compressed_file_path = await compress_and_upload_audio(audio_file, post_dir)
+
+                # Subir el archivo comprimido al servidor remoto
+                with open(compressed_file_path, "rb") as compressed_file:
+                    remote_file_path = os.path.join(post_dir, "beat_compressed.mp3")
+                    with ssh.open_sftp().file(remote_file_path, "wb") as remote_buffer:
+                        shutil.copyfileobj(compressed_file, remote_buffer)
 
     except paramiko.SSHException as e:
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
@@ -242,3 +250,43 @@ async def count_user_posts(user_id: str, current_user: User = Depends(get_curren
     # Contar las publicaciones del usuario
     count = await post_collection.count_documents({"user_id": user_id})
     return count
+
+async def compress_and_upload_audio(audio_file: UploadFile, post_dir: str):
+    # Crear un archivo temporal
+    with NamedTemporaryFile(delete=False) as temp_file:
+        temp_file.write(await audio_file.read())
+        temp_filename = temp_file.name
+
+    try:
+        # Verificar si el archivo es un archivo WAV
+        if audio_file.filename.lower().endswith('.wav'):
+            # Cargar el archivo WAV
+            audio = AudioSegment.from_file(temp_filename, format="wav")
+
+            # Obtener la información del archivo original
+            original_bitrate = mediainfo(temp_filename).get("bit_rate")
+
+            # Definir el bitrate objetivo para la compresión
+            target_bitrate = 128  # por ejemplo, 128 kbps
+
+            # Calcular el factor de compresión basado en los bitrate originales y objetivo
+            compression_factor = target_bitrate / original_bitrate
+
+            # Comprimir el audio ajustando la tasa de bits
+            compressed_audio = audio.set_frame_rate(int(audio.frame_rate * compression_factor))
+            compressed_audio = compressed_audio.set_channels(1)  # Convertir a mono (opcional)
+            compressed_audio = compressed_audio.set_sample_width(2)  # Establecer la profundidad de bits a 16 (opcional)
+
+            # Guardar el audio comprimido en formato MP3
+            compressed_filename = "beat_compressed.mp3"
+            compressed_file_path = os.path.join(post_dir, compressed_filename)
+            compressed_audio.export(compressed_file_path, format="mp3")
+
+            return compressed_file_path
+
+        else:
+            raise ValueError("El archivo no es un archivo WAV")
+
+    finally:
+        # Eliminar el archivo temporal
+        os.unlink(temp_filename)
