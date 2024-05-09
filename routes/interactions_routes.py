@@ -127,7 +127,8 @@ async def count_dislikes(post_id: str, db=Depends(get_database)):
     except Exception as e:
         print(f"Error al contar los saves: {e}")
         return 0
-
+'''
 @router.get("/protected-route")
 async def protected_route(current_user: NewUser = Security(decode_token, scopes=["base"])):
     return {"message": "Hello, secured world!", "user": current_user.username}
+'''

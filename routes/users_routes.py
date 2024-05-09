@@ -183,7 +183,7 @@ async def get_liked_posts(current_user: NewUser = Depends(get_current_user), db=
         post["_id"] = str(post["_id"])
     
     return {"liked_posts": liked_posts}
-
+'''
 @router.get("/lyrics", response_model=List[Lyrics])
 async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
@@ -194,7 +194,7 @@ async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=
         lyric["_id"] = str(lyric["_id"])
     
     return user_lyrics
-
+'''
 
 
 @router.get("/profile/{user_id}", response_model=UserProfile)

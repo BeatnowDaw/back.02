@@ -1,24 +1,79 @@
-import os
-import shutil
+import tempfile
 from config.security import SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, get_user_id
 import random
-from fastapi import APIRouter, HTTPException, Depends, Path, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from bson import ObjectId
-from datetime import datetime
 from typing import List
 import paramiko
-from requests import post
 from model.post_shemas import Post, PostInDB, PostShowed, NewPost
 from config.db import get_database, post_collection, users_collection, interactions_collection, lyrics_collection
 from config.security import get_current_user, get_user_id, get_username
 from model.user_shemas import User
 from routes.interactions_routes import count_likes, count_dislikes, count_saved
-from pydub import AudioSegment
-from pydub.utils import mediainfo
-from fastapi import File, UploadFile
+from fastapi import File, UploadFile, HTTPException
+import os
+import shutil
+import zipfile
+from datetime import datetime
+import io
 
 router = APIRouter()
+
+# Definir la ruta donde se guardarán los archivos temporales
+TEMP_DIRECTORY = "/var/www/html/beatnow/temp"
+
+
+async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_dir: str):
+    try:
+        # Comprimir el archivo de audio
+        compressed_audio = await compress_audio(audio_file)
+
+        # Crear un archivo zip en memoria
+        zip_file = io.BytesIO()
+        with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            zipf.writestr(f"post_{post_id}.mp3", compressed_audio)
+
+        # Subir el archivo zip al servidor remoto
+        with paramiko.SSHClient() as ssh:
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
+
+            with ssh.open_sftp().file(os.path.join(post_dir, f"post_{post_id}.zip"), "wb") as buffer:
+                buffer.write(zip_file.getvalue())
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+
+async def compress_audio(audio_file: UploadFile) -> bytes:
+    try:
+        # Leer el archivo de audio en memoria
+        audio_content = await audio_file.read()
+
+        # Comprimir el archivo de audio
+        compressed_audio = io.BytesIO()
+        with zipfile.ZipFile(compressed_audio, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            zipf.writestr(audio_file.filename, audio_content)
+
+        return compressed_audio.getvalue()
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while compressing audio: {str(e)}")
+
+
+async def save_temporary_file(upload_file: UploadFile, post_id: str) -> str:
+    try:
+        # Crear un archivo temporal con un nombre fijo
+        with tempfile.NamedTemporaryFile(prefix=f"beat_temporal_{post_id}", delete=False) as temp_file:
+            # Copiar los datos del archivo de carga en el archivo temporal
+            shutil.copyfileobj(upload_file.file, temp_file)
+            temp_file_name = temp_file.name  # Obtener el nombre del archivo temporal
+        # Devolver la ruta del archivo temporal creado
+        return temp_file_name
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 
 @router.post("/upload-post", response_model=PostInDB)
@@ -27,12 +82,11 @@ async def upload_post(
     audio_file: UploadFile = File(...),
     new_post: NewPost = Depends(),
     current_user: User = Depends(get_current_user),
-    db=Depends(get_database)
 ):
     # Validar el tipo de archivo antes de continuar
     allowed_image_extensions = {".jpg", ".jpeg"}
-    allowed_audio_extensions = {".wav", ".mp3"}
-    
+    allowed_audio_extensions = {".wav"}
+
     if not file.filename.lower().endswith(tuple(allowed_image_extensions)):
         raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
 
@@ -46,20 +100,20 @@ async def upload_post(
         raise HTTPException(status_code=404, detail="User not found")
 
     # Crear el post en la base de datos
-    post = Post(
-        user_id=str(ObjectId(user_id)),
-        publication_date=datetime.now(),
-        title=new_post.title,
-        description=new_post.description
-    )
-    result = await post_collection.insert_one(post.dict())
-    if not result.inserted_id:
-        raise HTTPException(status_code=500, detail="Failed to create publication")
-
-    post_id = str(result.inserted_id)
-    post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}/"
-
+    result = None
     try:
+        post = Post(
+            user_id=str(ObjectId(user_id)),
+            publication_date=datetime.now(),
+            **new_post.dict()
+        )
+        result = await post_collection.insert_one(post.dict())
+        if not result.inserted_id:
+            raise HTTPException(status_code=500, detail="Failed to create publication")
+
+        post_id = str(result.inserted_id)
+        post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}/"
+
         # Configuración de SSH
         with paramiko.SSHClient() as ssh:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -78,20 +132,25 @@ async def upload_post(
 
             # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
             if audio_file:
-                compressed_file_path = await compress_and_upload_audio(audio_file, post_dir)
+                # Guardar el archivo de audio temporalmente
+                audio_temp_path = await save_temporary_file(audio_file, post_id)
 
-                # Subir el archivo comprimido al servidor remoto
-                with open(compressed_file_path, "rb") as compressed_file:
-                    remote_file_path = os.path.join(post_dir, "beat_compressed.mp3")
-                    with ssh.open_sftp().file(remote_file_path, "wb") as remote_buffer:
-                        shutil.copyfileobj(compressed_file, remote_buffer)
+                # Subir el archivo temporal al servidor remoto
+                await compress_and_upload_audio(audio_file, post_id, post_dir)
 
     except paramiko.SSHException as e:
+        if result:
+            # Eliminar el post de la base de datos si se ha creado antes de la excepción
+            await post_collection.delete_one({"_id": result.inserted_id})
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
     except Exception as e:
+        if result:
+            # Eliminar el post de la base de datos si se ha creado antes de la excepción
+            await post_collection.delete_one({"_id": result.inserted_id})
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
     return PostInDB(_id=post_id, **post.dict())
+
 
 @router.get("/random-publication", response_model=PostShowed)
 async def get_random_publication(current_user: User = Depends(get_current_user), db=Depends(get_database)):
@@ -140,7 +199,7 @@ async def update_publication(post_id: str, publication: NewPost, current_user: U
     else:
         raise HTTPException(status_code=404, detail="Publication not found")
 
-#no elimina la publicacion de la base de d
+#no elimina la publicacion de la base de datos ni servidor
 # Eliminar publicación por ID
 @router.delete("/{post_id}")
 async def delete_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
@@ -251,42 +310,3 @@ async def count_user_posts(user_id: str, current_user: User = Depends(get_curren
     count = await post_collection.count_documents({"user_id": user_id})
     return count
 
-async def compress_and_upload_audio(audio_file: UploadFile, post_dir: str):
-    # Crear un archivo temporal
-    with NamedTemporaryFile(delete=False) as temp_file:
-        temp_file.write(await audio_file.read())
-        temp_filename = temp_file.name
-
-    try:
-        # Verificar si el archivo es un archivo WAV
-        if audio_file.filename.lower().endswith('.wav'):
-            # Cargar el archivo WAV
-            audio = AudioSegment.from_file(temp_filename, format="wav")
-
-            # Obtener la información del archivo original
-            original_bitrate = mediainfo(temp_filename).get("bit_rate")
-
-            # Definir el bitrate objetivo para la compresión
-            target_bitrate = 128  # por ejemplo, 128 kbps
-
-            # Calcular el factor de compresión basado en los bitrate originales y objetivo
-            compression_factor = target_bitrate / original_bitrate
-
-            # Comprimir el audio ajustando la tasa de bits
-            compressed_audio = audio.set_frame_rate(int(audio.frame_rate * compression_factor))
-            compressed_audio = compressed_audio.set_channels(1)  # Convertir a mono (opcional)
-            compressed_audio = compressed_audio.set_sample_width(2)  # Establecer la profundidad de bits a 16 (opcional)
-
-            # Guardar el audio comprimido en formato MP3
-            compressed_filename = "beat_compressed.mp3"
-            compressed_file_path = os.path.join(post_dir, compressed_filename)
-            compressed_audio.export(compressed_file_path, format="mp3")
-
-            return compressed_file_path
-
-        else:
-            raise ValueError("El archivo no es un archivo WAV")
-
-    finally:
-        # Eliminar el archivo temporal
-        os.unlink(temp_filename)
