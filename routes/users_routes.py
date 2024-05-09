@@ -234,12 +234,7 @@ async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)
             ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
             user_photo_dir = f"/var/www/html/beatnow/{current_user.username}/photo_profile"
-            ssh.exec_command(f"sudo rm -rf {user_photo_dir}/*")
-
-            # Verificar si la carpeta se borró correctamente
-            _, stderr, _ = ssh.exec_command(f"test -d {user_photo_dir}")
-            if stderr.channel.recv_exit_status() == 0:
-                raise HTTPException(status_code=500, detail="Error deleting user photo profile from server")
+            ssh.exec_command(f"sudo cp /var/www/html/beatnow/res/default-profile.jpg {user_photo_dir}/photo_profile.png")
 
     except paramiko.SSHException as e:
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
