@@ -85,7 +85,7 @@ async def upload_post(
 ):
     # Validar el tipo de archivo antes de continuar
     allowed_image_extensions = {".jpg", ".jpeg"}
-    allowed_audio_extensions = {".wav"}
+    allowed_audio_extensions = {".wav", ".mp3", ".flac"}
 
     if not file.filename.lower().endswith(tuple(allowed_image_extensions)):
         raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
