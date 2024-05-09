@@ -24,7 +24,7 @@ router = APIRouter()
 TEMP_DIRECTORY = "/var/www/html/beatnow/temp"
 
 
-async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_dir: str):
+async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_dir: str, prefix ):
     try:
         # Comprimir el archivo de audio
         compressed_audio = await compress_audio(audio_file)
@@ -32,7 +32,10 @@ async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_d
         # Crear un archivo zip en memoria
         zip_file = io.BytesIO()
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            zipf.writestr(f"post_{post_id}.mp3", compressed_audio)
+            if prefix == ".wav":
+                zipf.writestr(f"post_{post_id}.wav" , compressed_audio)
+            elif prefix == ".mp3":
+                zipf.writestr(f"post_{post_id}.mp3" , compressed_audio)
 
         # Subir el archivo zip al servidor remoto
         with paramiko.SSHClient() as ssh:
@@ -136,7 +139,11 @@ async def upload_post(
                 audio_temp_path = await save_temporary_file(audio_file, post_id)
 
                 # Subir el archivo temporal al servidor remoto
-                await compress_and_upload_audio(audio_file, post_id, post_dir)
+                if audio_file.filename.lower().endswith(".mp3"):
+                    await compress_and_upload_audio(audio_file, post_id, post_dir, ".mp3")
+                elif audio_file.filename.lower().endswith(".wav"):
+                    await compress_and_upload_audio(audio_file, post_id, post_dir, ".wav")
+                
 
     except paramiko.SSHException as e:
         if result:
