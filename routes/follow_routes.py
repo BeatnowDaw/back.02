@@ -78,7 +78,7 @@ async def is_following(user_id: str, db=Depends(get_database), current_user: New
     # Verificar si existe la relación de seguimiento
     follow = await follows_collection.find_one({"user_id_following": user_id_following, "user_id_followed": user_id_followed})
     return follow is not None
-
+#hay que arreglarlas
 @router.get("/followers/{user_id_followed}")
 async def get_followers(user_id_followed: str, db = Depends(get_database)):
     # Recuperar todos los documentos que tienen el user_id_followed
@@ -90,7 +90,7 @@ async def get_followers(user_id_followed: str, db = Depends(get_database)):
     # Recuperar detalles completos de cada seguidor
     followers = []
     for user_id in follower_ids:
-        user_info = await db.users_collection.find_one({"_id": user_id})
+        user_info = await db.users_collection.find_one({"_id": ObjectId(user_id)})
         if user_info:
             followers.append(user_info)
 
@@ -107,7 +107,7 @@ async def get_following(user_id_following: str, db = Depends(get_database)):
     # Recuperar detalles completos de cada usuario seguido
     following = []
     for user_id in following_ids:
-        user_info = await db.users_collection.find_one({"_id": user_id})
+        user_info = await db.users_collection.find_one({"_id": ObjectId(user_id)})
         if user_info:
             following.append(user_info)
 
