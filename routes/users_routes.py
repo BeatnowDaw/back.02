@@ -43,8 +43,13 @@ async def register(user: NewUser):
         username = user_dict['username']
         directory_commands = f"sudo mkdir -p /var/www/html/beatnow/{user_id}/photo_profile /var/www/html/beatnow/{user_id}/posts"
         stdin, stdout, stderr = ssh.exec_command(directory_commands)
-
         exit_status = stderr.channel.recv_exit_status()
+        if exit_status != 0:
+            raise HTTPException(status_code=500, detail="Error creating the folder on the remote server")
+        
+        stdin, stdout, stderr = ssh.exec_command(delete_photo_profile)
+        exit_status = stderr.channel.recv_exit_status()
+
 
         if exit_status != 0:
             raise HTTPException(status_code=500, detail="Error creating the folder on the remote server")
