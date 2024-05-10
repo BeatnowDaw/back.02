@@ -1,105 +1,49 @@
-INFO:root:2024-04-23 18:10:44.853318 - Login failed - Incorrect username: hugo123
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (publickey) failed.
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (publickey) failed.
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (publickey) failed.
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:root:2024-04-23 18:23:55.562219 - Login successful for username: string
-INFO:root:2024-04-23 18:25:22.236793 - Login successful for username: string
-INFO:root:2024-04-23 18:35:07.418321 - Login successful for username: string
-INFO:root:2024-04-23 18:38:04.475317 - Login successful for username: string
-INFO:root:2024-04-23 18:40:51.166575 - Login successful for username: string
-INFO:root:2024-04-23 18:53:14.843083 - Login successful for username: string
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:root:2024-04-24 18:17:35.918594 - Login successful for username: string
-INFO:root:2024-04-24 18:41:02.105793 - Login successful for username: string
-INFO:root:2024-04-24 19:41:41.742457 - Login successful for username: string
-INFO:root:2024-04-24 19:45:19.561028 - Login successful for username: string
-INFO:root:2024-04-26 18:17:52.795011 - Login successful for username: string
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 1] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 1] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 1] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-ERROR:paramiko.transport:Exception: Error reading SSH protocol banner
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2211, in _check_banner
-ERROR:paramiko.transport:    buf = self.packetizer.readline(timeout)
-ERROR:paramiko.transport:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 380, in readline
-ERROR:paramiko.transport:    buf += self._read_timeout(timeout)
-ERROR:paramiko.transport:           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 622, in _read_timeout
-ERROR:paramiko.transport:    raise socket.timeout()
-ERROR:paramiko.transport:TimeoutError
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:During handling of the above exception, another exception occurred:
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2039, in run
-ERROR:paramiko.transport:    self._check_banner()
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2215, in _check_banner
-ERROR:paramiko.transport:    raise SSHException(
-ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
-ERROR:paramiko.transport:
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:root:2024-05-07 20:07:48.992291 - Login successful for username: string
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:root:2024-05-08 16:19:11.529689 - Login successful for username: aaa
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:root:2024-05-10 18:17:44.961118 - Login failed - Incorrect username: aa
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
@@ -109,27 +53,10 @@ INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:root:2024-05-08 18:24:21.156363 - Login failed - Incorrect password for username: string
-INFO:root:2024-05-08 18:24:49.545296 - Login failed - Incorrect password for username: string
-INFO:root:2024-05-08 18:25:11.436808 - Login failed - Incorrect password for username: string
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:root:2024-05-10 18:56:50.040974 - Login failed - Incorrect username: aa
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
@@ -139,197 +66,4 @@ INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:root:2024-05-09 15:34:42.552890 - Login failed - Incorrect username: aaa
-ERROR:paramiko.transport:Exception: Error reading SSH protocol banner
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2211, in _check_banner
-ERROR:paramiko.transport:    buf = self.packetizer.readline(timeout)
-ERROR:paramiko.transport:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 380, in readline
-ERROR:paramiko.transport:    buf += self._read_timeout(timeout)
-ERROR:paramiko.transport:           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 622, in _read_timeout
-ERROR:paramiko.transport:    raise socket.timeout()
-ERROR:paramiko.transport:TimeoutError
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:During handling of the above exception, another exception occurred:
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2039, in run
-ERROR:paramiko.transport:    self._check_banner()
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2215, in _check_banner
-ERROR:paramiko.transport:    raise SSHException(
-ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:Exception: Error reading SSH protocol banner
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2211, in _check_banner
-ERROR:paramiko.transport:    buf = self.packetizer.readline(timeout)
-ERROR:paramiko.transport:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 380, in readline
-ERROR:paramiko.transport:    buf += self._read_timeout(timeout)
-ERROR:paramiko.transport:           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 622, in _read_timeout
-ERROR:paramiko.transport:    raise socket.timeout()
-ERROR:paramiko.transport:TimeoutError
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:During handling of the above exception, another exception occurred:
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2039, in run
-ERROR:paramiko.transport:    self._check_banner()
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2215, in _check_banner
-ERROR:paramiko.transport:    raise SSHException(
-ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:Exception: Error reading SSH protocol banner
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2211, in _check_banner
-ERROR:paramiko.transport:    buf = self.packetizer.readline(timeout)
-ERROR:paramiko.transport:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 380, in readline
-ERROR:paramiko.transport:    buf += self._read_timeout(timeout)
-ERROR:paramiko.transport:           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 622, in _read_timeout
-ERROR:paramiko.transport:    raise socket.timeout()
-ERROR:paramiko.transport:TimeoutError
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:During handling of the above exception, another exception occurred:
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2039, in run
-ERROR:paramiko.transport:    self._check_banner()
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2215, in _check_banner
-ERROR:paramiko.transport:    raise SSHException(
-ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:Exception: Error reading SSH protocol banner
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2211, in _check_banner
-ERROR:paramiko.transport:    buf = self.packetizer.readline(timeout)
-ERROR:paramiko.transport:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 380, in readline
-ERROR:paramiko.transport:    buf += self._read_timeout(timeout)
-ERROR:paramiko.transport:           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\packet.py", line 622, in _read_timeout
-ERROR:paramiko.transport:    raise socket.timeout()
-ERROR:paramiko.transport:TimeoutError
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:During handling of the above exception, another exception occurred:
-ERROR:paramiko.transport:
-ERROR:paramiko.transport:Traceback (most recent call last):
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2039, in run
-ERROR:paramiko.transport:    self._check_banner()
-ERROR:paramiko.transport:  File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\paramiko\transport.py", line 2215, in _check_banner
-ERROR:paramiko.transport:    raise SSHException(
-ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
-ERROR:paramiko.transport:
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)

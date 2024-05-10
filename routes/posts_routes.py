@@ -9,7 +9,7 @@ import paramiko
 from model.post_shemas import Post, PostInDB, PostShowed, NewPost
 from config.db import get_database, post_collection, users_collection, interactions_collection, lyrics_collection
 from config.security import get_current_user, get_user_id, get_username
-from model.user_shemas import User
+from model.user_shemas import NewUser, User
 from routes.interactions_routes import count_likes, count_dislikes, count_saved
 from fastapi import File, UploadFile, HTTPException
 import os
@@ -39,7 +39,7 @@ async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_d
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
-            with ssh.open_sftp().file(os.path.join(post_dir, f"post_{post_id}.zip"), "wb") as buffer:
+            with ssh.open_sftp().file(os.path.join(post_dir, f"audio_{post_id}.zip"), "wb") as buffer:
                 buffer.write(zip_file.getvalue())
 
     except Exception as e:
@@ -76,12 +76,12 @@ async def save_temporary_file(upload_file: UploadFile, post_id: str) -> str:
 
 
 
-@router.post("/upload-post", response_model=PostInDB)
+@router.post("/upload", response_model=PostInDB)
 async def upload_post(
     file: UploadFile = File(...),
     audio_file: UploadFile = File(...),
     new_post: NewPost = Depends(),
-    current_user: User = Depends(get_current_user),
+    current_user: NewUser = Depends(get_current_user),
 ):
     # Validar el tipo de archivo antes de continuar
     allowed_image_extensions = {".jpg", ".jpeg"}
@@ -112,7 +112,7 @@ async def upload_post(
             raise HTTPException(status_code=500, detail="Failed to create publication")
 
         post_id = str(result.inserted_id)
-        post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}/"
+        post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
 
         # Configuración de SSH
         with paramiko.SSHClient() as ssh:
@@ -125,16 +125,13 @@ async def upload_post(
                 ssh.exec_command(f"sudo mkdir -p {post_dir}")
                 ssh.exec_command(f"sudo chown -R $USER:$USER {post_dir}")
 
-            # Guardar la nueva foto de perfil con un nombre único y formato png
+            # Guardar la nueva foto de perfil con un nombre único y formato jpg
             file_path = os.path.join(post_dir, "caratula.jpg")
             with ssh.open_sftp().file(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
             # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
             if audio_file:
-                # Guardar el archivo de audio temporalmente
-                audio_temp_path = await save_temporary_file(audio_file, post_id)
-
                 # Subir el archivo temporal al servidor remoto
                 await compress_and_upload_audio(audio_file, post_id, post_dir)
 
@@ -151,8 +148,84 @@ async def upload_post(
 
     return PostInDB(_id=post_id, **post.dict())
 
+@router.put("/update/{post_id}", response_model=PostInDB)
+async def update_post(
+    post_id: str,
+    file: UploadFile = File(None),
+    audio_file: UploadFile = File(None),
+    new_post: NewPost = Depends(),
+    current_user: NewUser = Depends(get_current_user),
+):
+    # Validar el tipo de archivo antes de continuar
+    allowed_image_extensions = {".jpg", ".jpeg"}
+    allowed_audio_extensions = {".wav"}
 
-@router.get("/random-publication", response_model=PostShowed)
+    if file and not file.filename.lower().endswith(tuple(allowed_image_extensions)):
+        raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
+
+    if audio_file and not audio_file.filename.lower().endswith(tuple(allowed_audio_extensions)):
+        raise HTTPException(status_code=415, detail="Only MP3/WAV files are allowed for audio.")
+
+    # Obtener la publicación existente
+    existing_post = await post_collection.find_one({"_id": ObjectId(post_id)})
+    if existing_post is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    # Obtener ID del usuario
+    user_id = await get_user_id(current_user.username)
+    if user_id == "Usuario no encontrado":
+        raise HTTPException(status_code=404, detail="User not found")
+    if user_id!=new_post.user_id:
+        raise HTTPException(status_code=403, detail="You are not authorized to update this publication")
+    # Actualizar la publicación en la base de datos
+    try:
+        
+        # Crear una instancia de la clase Post con los campos existentes
+        post = Post(**existing_post)
+
+        # Actualizar solo los campos recibidos en la solicitud de actualización
+        for field, value in new_post.dict().items():
+            setattr(post, field, value)
+
+        
+        post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
+        if file:
+            # Configuración de SSH
+            with paramiko.SSHClient() as ssh:
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
+
+
+                # Guardar la nueva foto con el nombre original
+                existing_image_path = os.path.join(post_dir, "caratula.jpg")
+                with ssh.open_sftp().file(existing_image_path, "wb") as buffer:
+                    shutil.copyfileobj(file.file, buffer)
+                if audio_file:
+                    # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
+                    if audio_file:
+                        # Subir el archivo temporal al servidor remoto
+                        await compress_and_upload_audio(audio_file, post_id, post_dir)
+
+        # Actualizar la publicación en la base de datos
+            # Encuentra y actualiza el usuario en la base de datos
+        update_result = await users_collection.update_one(
+            {"_id": ObjectId(post.id)},
+            {"$set": {k: v for k, v in post.dict().items() if v is not None}}
+                )
+        if update_result.modified_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to update publication")
+        update_post = await post_collection.find_one({"_id": ObjectId(post_id)})
+
+    except paramiko.SSHException as e:
+        raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+    return PostInDB(**update_post)
+
+
+
+@router.get("/random", response_model=PostShowed)
 async def get_random_publication(current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Fetch all post IDs
     post_ids = await post_collection.find({}, {"_id": 1}).to_list(length=None)
@@ -243,28 +316,28 @@ async def has_saved_post(post_id: str, current_user: User):
     user_id = await get_user_id(current_user.username)
     saved_exists = await interactions_collection.count_documents({"user_id": user_id, "post_id": post_id, "saved_date": {"$exists": True}})
     return saved_exists > 0
-
+'''
 @router.post("/change_post_cover/{post_id}")
-async def change_post_cover(post_id: str, file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+async def change_post_cover(post_id: str, file: UploadFile = File(...), current_user: NewUser = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
+    user_id = await get_user_id(current_user.username)
     try:
         # Obtener el post
-        post = await lyrics_collection.find_one({"_id": post_id})
+        post = await post_collection.find_one({"_id": ObjectId(post_id)})
         if not post:
             raise HTTPException(status_code=404, detail="Post not found")
 
         # Verificar si el usuario tiene permisos para editar el post
-        if post["user_id"] != current_user.id:
+        if user_id != post["user_id"]:
             raise HTTPException(status_code=403, detail="Unauthorized to edit this post")
 
         # Guardar la nueva carátula con un nombre único y formato png
-        file_path = os.path.join("/var/www/html/beatnow", current_user.username, "posts", post_id, "cover.png")
+        file_path = os.path.join("/var/www/html/beatnow", current_user.username, "posts", post_id, "caratula.jpg")
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
@@ -272,8 +345,8 @@ async def change_post_cover(post_id: str, file: UploadFile = File(...), current_
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
     return {"message": "Post cover updated successfully"}
-
-@router.post("/delete_post_cover/{post_id}")
+'''
+#@router.post("/delete_post_cover/{post_id}")
 async def delete_post_cover(post_id: str, current_user: User = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(
@@ -281,7 +354,7 @@ async def delete_post_cover(post_id: str, current_user: User = Depends(get_curre
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
+    user_id = await get_user_id(current_user.username)
     try:
         # Obtener el post
         post = await post_collection.find_one({"_id": post_id})
@@ -293,7 +366,7 @@ async def delete_post_cover(post_id: str, current_user: User = Depends(get_curre
             raise HTTPException(status_code=403, detail="Unauthorized to edit this post")
 
         # Eliminar la carátula del post
-        post_dir = f"/var/www/html/beatnow/{current_user.username}/posts/{post_id}"
+        post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}"
         os.remove(os.path.join(post_dir, "cover.png"))
 
     except Exception as e:
@@ -302,9 +375,6 @@ async def delete_post_cover(post_id: str, current_user: User = Depends(get_curre
     return {"message": "Post cover deleted successfully"}
 
 async def count_user_posts(user_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
-    # Verificar si el usuario tiene permisos para ver las publicaciones del usuario
-    if user_id != await get_user_id(current_user.username):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     # Contar las publicaciones del usuario
     count = await post_collection.count_documents({"user_id": user_id})

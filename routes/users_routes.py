@@ -6,15 +6,15 @@ import shutil
 from bson import ObjectId
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
-from model.user_shemas import NewUser, User, UserProfile
+from model.user_shemas import NewUser, User, UserInDB, UserProfile
 from model.lyrics_shemas import Lyrics
-from config.security import oauth2_scheme, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
+from config.security import  guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
 from config.db import users_collection, interactions_collection, get_database, lyrics_collection, follows_collection, post_collection
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import File, HTTPException, Depends, UploadFile, status, APIRouter
 import paramiko
-from routes.follow_routes import get_followers, get_following
+from routes.follow_routes import get_follower, get_following
 from routes.posts_routes import list_user_publications
 import pymongo
 
@@ -28,7 +28,9 @@ async def register(user: NewUser):
     existing_user = await users_collection.find_one({"username": user.username})
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-
+    existing_user = await users_collection.find_one({"email": user.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
     # Hash the password before saving it
     password_hash = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
     user_dict = user.dict()
@@ -37,9 +39,9 @@ async def register(user: NewUser):
     with paramiko.SSHClient() as ssh:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-
+        user_id = await get_user_id( user_dict['username'])
         username = user_dict['username']
-        directory_commands = f"sudo mkdir -p /var/www/html/beatnow/{username}/photo_profile /var/www/html/beatnow/{username}/posts"
+        directory_commands = f"sudo mkdir -p /var/www/html/beatnow/{user_id}/photo_profile /var/www/html/beatnow/{user_id}/posts"
         stdin, stdout, stderr = ssh.exec_command(directory_commands)
 
         exit_status = stderr.channel.recv_exit_status()
@@ -64,7 +66,7 @@ async def delete_user(current_user: NewUser = Depends(get_current_user), db=Depe
             ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
             # Eliminar la carpeta del usuario en el servidor
-            user_dir = f"/var/www/html/beatnow/{current_user.username}"
+            user_dir = f"/var/www/html/beatnow/{user_id}"
             ssh.exec_command(f"sudo rm -rf {user_dir}")
 
             # Verificar si la carpeta se borró correctamente
@@ -115,7 +117,9 @@ async def delete_user(current_user: NewUser = Depends(get_current_user), db=Depe
 async def read_users_me(
     current_user: Annotated[NewUser, Depends(get_current_user)],
 ):
-    return current_user
+    user_id= await get_user_id(current_user.username)
+    return await users_collection.find_one({"_id": ObjectId(user_id)})
+
 
 '''
 #Listar todos los usuarios
@@ -183,7 +187,7 @@ async def get_liked_posts(current_user: NewUser = Depends(get_current_user), db=
         post["_id"] = str(post["_id"])
     
     return {"liked_posts": liked_posts}
-'''
+
 @router.get("/lyrics", response_model=List[Lyrics])
 async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
@@ -194,11 +198,11 @@ async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=
         lyric["_id"] = str(lyric["_id"])
     
     return user_lyrics
-'''
+
 
 
 @router.get("/profile/{user_id}", response_model=UserProfile)
-async def get_user_lyrics(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
+async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_dict = await users_collection.find_one({"_id": ObjectId(user_id)})
     if user_dict:
         userindb = User(**user_dict)
@@ -206,13 +210,12 @@ async def get_user_lyrics(user_id: str, current_user: NewUser = Depends(get_curr
         if user_id_following==user_id:
             isFollowing = 0
         else:
-            
             existing_follow = await follows_collection.find_one({"user_id_followed": user_id, "user_id_following": user_id_following})
             if existing_follow:
                 isFollowing = 1
             else:
                 isFollowing = -1
-        profile = UserProfile(**userindb.dict(),_id=str(ObjectId(user_id)),  followers = await get_followers(user_id), following = await get_following(user_id),
+        profile = UserProfile(**userindb.dict(),_id=str(ObjectId(user_id)),  followers = await get_follower(user_id), following = await get_following(user_id),
                           post_num = await lyrics_collection.count_documents({"user_id": user_id}), post= await list_user_publications(user_id), is_following = isFollowing )
         return profile
     else:
@@ -226,14 +229,14 @@ async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
+    user_id = await get_user_id(current_user.username)
     try:
         # Conexión SSH y eliminación de la foto de perfil del usuario en el servidor
         with paramiko.SSHClient() as ssh:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
-            user_photo_dir = f"/var/www/html/beatnow/{current_user.username}/photo_profile"
+            user_photo_dir = f"/var/www/html/beatnow/{user_id}/photo_profile"
             ssh.exec_command(f"sudo cp /var/www/html/beatnow/res/default-profile.jpg {user_photo_dir}/photo_profile.png")
 
     except paramiko.SSHException as e:
@@ -282,3 +285,26 @@ async def change_photo_profile(file: UploadFile = File(...), current_user: NewUs
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
     return {"message": "Photo profile updated successfully"}
+
+@router.put("/update")
+async def update_user(user_update: UserInDB, current_user: NewUser = Depends(get_current_user), db = Depends(get_database)):
+    current_userdict = await users_collection.find_one({"username": current_user.username})
+    if current_userdict["_id"]!=ObjectId(user_update.id):
+        raise HTTPException(status_code=400, detail="You can only update your own user data")
+    # Hash the password before saving it
+    password_hash = bcrypt.hashpw(user_update.password.encode('utf-8'), bcrypt.gensalt())
+    user = User(**user_update.dict())
+    user_dict = user.dict()
+    user_dict['password'] = password_hash
+    # Encuentra y actualiza el usuario en la base de datos
+    result = await users_collection.update_one(
+    {"_id": ObjectId(user_update.id)},
+    {"$set": {k: v for k, v in user_dict.items() if v is not None}}
+        )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    elif result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="No new data to update")
+
+    return {"message": "User updated successfully"}
