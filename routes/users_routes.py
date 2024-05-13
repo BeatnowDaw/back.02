@@ -1,5 +1,4 @@
 from datetime import timedelta
-from email.header import Header
 import os
 from typing import Annotated, List
 import shutil
@@ -42,12 +41,13 @@ async def register(user: NewUser):
         user_id = await get_user_id( user_dict['username'])
         username = user_dict['username']
         directory_commands = f"sudo mkdir -p /var/www/html/beatnow/{user_id}/photo_profile /var/www/html/beatnow/{user_id}/posts"
+        delete_photo = f"sudo cp /var/www/html/beatnow/res/default-profile.jpg /var/www/html/beatnow/{user_id}/photo_profile/photo_profile.png"
         stdin, stdout, stderr = ssh.exec_command(directory_commands)
         exit_status = stderr.channel.recv_exit_status()
         if exit_status != 0:
             raise HTTPException(status_code=500, detail="Error creating the folder on the remote server")
         
-        stdin, stdout, stderr = ssh.exec_command(delete_photo_profile)
+        stdin, stdout, stderr = ssh.exec_command(delete_photo)
         exit_status = stderr.channel.recv_exit_status()
 
 
@@ -123,7 +123,7 @@ async def read_users_me(
     current_user: Annotated[NewUser, Depends(get_current_user)],
 ):
     user_id= await get_user_id(current_user.username)
-    return await users_collection.find_one({"_id": ObjectId(user_id)})
+    return {**current_user.dict(), "id": str(user_id)}
 
 
 '''

@@ -14,7 +14,7 @@ class Post(NewPost):
     #beat_info: MusicBase._id = Field(alias="beat_info")
 
 class PostInDB(Post):
-    id: str = Field(alias='_id')
+    id: Optional[str] = Field(default=None, alias='_id')
 
     @validator('id', pre=True, always=True)
     def convert_id(cls, v):
