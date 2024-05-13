@@ -52,7 +52,7 @@ async def register(user: NewUser):
 
 
         if exit_status != 0:
-            raise HTTPException(status_code=500, detail="Error creating the folder on the remote server")
+            raise HTTPException(status_code=500, detail="Error creating the default photo on the remote server")
     return {"_id": str(result.inserted_id)}
 
 @router.delete("/delete")
@@ -63,7 +63,10 @@ async def delete_user(current_user: NewUser = Depends(get_current_user), db=Depe
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
+    # Obtener el ID del usuario
+    user_id = await get_user_id(current_user.username)
+    if not user_id:
+        raise HTTPException(status_code=500, detail="User ID not found")
     try:
         # Conexión SSH
         with paramiko.SSHClient() as ssh:
@@ -79,10 +82,7 @@ async def delete_user(current_user: NewUser = Depends(get_current_user), db=Depe
             if stderr.channel.recv_exit_status() == 0:
                 raise HTTPException(status_code=500, detail="Error deleting user directory from server")
 
-        # Obtener el ID del usuario
-        user_id = await get_user_id(current_user.username)
-        if not user_id:
-            raise HTTPException(status_code=500, detail="User ID not found")
+        
 
         # Obtener los IDs de los posts del usuario
         user_posts = await post_collection.find({"user_id": ObjectId(user_id)}, {"_id": 1}).to_list(None)
@@ -313,3 +313,11 @@ async def update_user(user_update: UserInDB, current_user: NewUser = Depends(get
         raise HTTPException(status_code=400, detail="No new data to update")
 
     return {"message": "User updated successfully"}
+
+@router.get("/check-username")
+async def check_username(username: str):
+    # Check if the username is already taken
+    existing_user = await users_collection.find_one({"username": username})
+    if existing_user:
+        return {"status": "ko", "detail": "Username already registered"}
+    return {"status": "ok", "detail": "Username is available"}

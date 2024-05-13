@@ -47,14 +47,14 @@ async def delete_follow(user_id: str, current_user: NewUser = Depends(get_curren
     # Obtener los IDs de usuario
     user_id_following = await get_user_id(current_user.username)
     user_id_followed = user_id
-
-    user = await users_collection.find_one({"_id": ObjectId(user_id_followed)})
-    
-    # Eliminar la relación de seguimiento si existe
-    result = await follows_collection.delete_one({"user_id_following": user_id_following, "user_id_followed": user_id_followed})
-    if result.deleted_count == 0:
+    result = await follows_collection.find_one({"user_id_following": user_id_following, "user_id_followed": user_id_followed})
+    if result is None:        
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Follow not found")
-
+    # Eliminar la relación de seguimiento si existe
+    result = await follows_collection.delete_one({"_id": result["_id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Error deleting follow")
+    return {"message": "Follow deleted successfully"}
 #@router.get("/count/{user_id_followed}")
 async def count_followers(user_id_followed: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     count = await follows_collection.count_documents({"user_id_followed": user_id_followed})

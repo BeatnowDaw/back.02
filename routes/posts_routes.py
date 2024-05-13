@@ -23,6 +23,26 @@ router = APIRouter()
 # Definir la ruta donde se guardarán los archivos temporales
 TEMP_DIRECTORY = "/var/www/html/beatnow/temp"
 
+async def decompress_audio_on_server(post_dir: str, post_id: str):
+    try:
+        with paramiko.SSHClient() as ssh:
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
+            
+            # Comando para descomprimir el archivo en el servidor
+            unzip_command = f"unzip {post_dir}audio_{post_id}.zip -d {post_dir}"
+            stdin, stdout, stderr = ssh.exec_command(unzip_command)
+            exit_status = stdout.channel.recv_exit_status()  # Espera a que termine el comando
+            
+            if exit_status != 0:
+                raise Exception(f"Error unzipping file: {stderr.read().decode()}")
+            else:
+                print("File decompressed successfully")
+                
+    except paramiko.SSHException as e:
+        raise HTTPException(status_code=500, detail=f"SSH error during decompression: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred during decompression: {str(e)}")
 
 async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_dir: str):
     try:
@@ -32,7 +52,7 @@ async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_d
         # Crear un archivo zip en memoria
         zip_file = io.BytesIO()
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            zipf.writestr(f"post_{post_id}.mp3", compressed_audio)
+            zipf.writestr(f"post_{post_id}.wav", compressed_audio)
 
         # Subir el archivo zip al servidor remoto
         with paramiko.SSHClient() as ssh:
@@ -129,11 +149,19 @@ async def upload_post(
             file_path = os.path.join(post_dir, "caratula.jpg")
             with ssh.open_sftp().file(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
+            if audio_file:
+                audio_file_path = os.path.join(post_dir, "audio.wav")
+            with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
+                shutil.copyfileobj(audio_file.file, buffer)
 
+            '''
             # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
             if audio_file:
                 # Subir el archivo temporal al servidor remoto
                 await compress_and_upload_audio(audio_file, post_id, post_dir)
+                # Descomprimir el archivo en el servidor
+                await decompress_audio_on_server(post_dir, post_id)
+                '''
 
     except paramiko.SSHException as e:
         if result:
@@ -235,6 +263,7 @@ async def get_random_publication(current_user: User = Depends(get_current_user),
 
     # Select a random ID from the list
     random_post_id = random.choice(post_ids)['_id']
+    user_id=await get_user_id(current_user.username)
 
     # Use the existing read_publication function to fetch and return the publication details
     return await read_publication(str(random_post_id), current_user, db)
@@ -348,12 +377,6 @@ async def change_post_cover(post_id: str, file: UploadFile = File(...), current_
 '''
 #@router.post("/delete_post_cover/{post_id}")
 async def delete_post_cover(post_id: str, current_user: User = Depends(get_current_user)):
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
     user_id = await get_user_id(current_user.username)
     try:
         # Obtener el post
