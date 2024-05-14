@@ -262,7 +262,6 @@ async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)
 
     return {"message": "Photo profile deleted successfully"}
 
-
 @router.post("/change_photo_profile")
 async def change_photo_profile(file: UploadFile = File(...), current_user: NewUser = Depends(get_current_user)):
     if not current_user:
@@ -272,9 +271,9 @@ async def change_photo_profile(file: UploadFile = File(...), current_user: NewUs
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    root_path = "/var/www/html/beatnow"  # Root path where profile photos are stored
-    user_photo_dir = os.path.join(root_path, current_user.username, "photo_profile")  # User's profile photo directory
-
+    user_id = await get_user_id(current_user.username)
+    user_photo_dir = f"/var/www/html/beatnow/{user_id}/photo_profile"
+    
     try:
         # Establish SSH connection
         with paramiko.SSHClient() as ssh:
@@ -283,16 +282,27 @@ async def change_photo_profile(file: UploadFile = File(...), current_user: NewUs
 
             # Verify if the user's directory exists, if not, create it
             mkdir_command = f"test -d {user_photo_dir} || sudo mkdir -p {user_photo_dir}"
-            chown_command = f"sudo chown -R $USER:$USER {user_photo_dir}"
             stdin, stdout, stderr = ssh.exec_command(mkdir_command)
-            stdout.channel.recv_exit_status()
+            exit_status = stdout.channel.recv_exit_status()
+            if exit_status != 0:
+                error_message = stderr.read().decode()
+                raise HTTPException(status_code=500, detail=f"Failed to create directory: {error_message}")
+            
+            # Ensure the correct permissions
+            chown_command = f"sudo chown -R $USER:$USER {user_photo_dir}"
             stdin, stdout, stderr = ssh.exec_command(chown_command)
-            stdout.channel.recv_exit_status()
+            exit_status = stdout.channel.recv_exit_status()
+            if exit_status != 0:
+                error_message = stderr.read().decode()
+                raise HTTPException(status_code=500, detail=f"Failed to set permissions: {error_message}")
 
             # Remove existing content in the user's profile photo folder
             rm_command = f"sudo rm -rf {user_photo_dir}/*"
             stdin, stdout, stderr = ssh.exec_command(rm_command)
-            stdout.channel.recv_exit_status()
+            exit_status = stdout.channel.recv_exit_status()
+            if exit_status != 0:
+                error_message = stderr.read().decode()
+                raise HTTPException(status_code=500, detail=f"Failed to remove existing files: {error_message}")
 
             # Save the new profile photo with a unique name and png format
             sftp = ssh.open_sftp()
