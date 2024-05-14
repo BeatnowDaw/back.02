@@ -151,8 +151,8 @@ async def upload_post(
                 shutil.copyfileobj(file.file, buffer)
             if audio_file:
                 audio_file_path = os.path.join(post_dir, "audio.wav")
-            with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
-                shutil.copyfileobj(audio_file.file, buffer)
+                with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
+                    shutil.copyfileobj(audio_file.file, buffer)
 
             '''
             # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
@@ -222,17 +222,18 @@ async def update_post(
             with paramiko.SSHClient() as ssh:
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-
-
                 # Guardar la nueva foto con el nombre original
                 existing_image_path = os.path.join(post_dir, "caratula.jpg")
                 with ssh.open_sftp().file(existing_image_path, "wb") as buffer:
                     shutil.copyfileobj(file.file, buffer)
                 if audio_file:
-                    # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
+                    audio_file_path = os.path.join(post_dir, "audio.wav")
+                    with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
+                        shutil.copyfileobj(audio_file.file, buffer)
+                    '''# Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
                     if audio_file:
                         # Subir el archivo temporal al servidor remoto
-                        await compress_and_upload_audio(audio_file, post_id, post_dir)
+                        await compress_and_upload_audio(audio_file, post_id, post_dir)'''
 
         # Actualizar la publicación en la base de datos
             # Encuentra y actualiza el usuario en la base de datos

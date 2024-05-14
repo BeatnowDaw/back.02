@@ -11,6 +11,10 @@ post_collection = db['Posts']
 interactions_collection = db['Interactions']
 lyrics_collection = db['Lyrics']
 follows_collection = db['Follows']
+genres_collection = db['Genres']
+moods_collection = db['Moods']
+instruments_collection = db['Instruments']
+
 
 
 async def get_database() -> Database:

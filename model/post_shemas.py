@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import List, Optional
 from bson import ObjectId
+from fastapi import Query
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 
@@ -7,6 +8,12 @@ from datetime import datetime
 class NewPost(BaseModel):
     title: Optional[str] = Field(alias="title")
     description: Optional[str] = Field(alias="description")
+    tags: Optional[list] = Field(alias="tags")
+    genres: str = Field(alias="genres")
+    moods: Optional[list] = Field(alias="moods")
+    instruments: Optional[list] = Field(alias="instruments")
+    bpm: Optional[int] = Field(alias="bpm")
+    key: Optional[str] = Field(alias="key")
 
 class Post(NewPost):
     user_id: str = Field(alias="user_id")
@@ -27,3 +34,29 @@ class PostShowed(PostInDB):
     creator_username: Optional[str] = Field(default=None, alias="creator_username")
     isLiked: Optional[bool] = Field(default=False, alias="isLiked")
     isSaved: Optional[bool] = Field(default=False, alias="isSaved")
+
+'''class SearchParams(BaseModel):
+    genre: Optional[str] = None
+    bpm: Optional[int] = None
+    mood: Optional[str] = None
+    instruments: Optional[List[str]] = Query(None)
+    key: Optional[str] = None
+    tags: Optional[List[str]] = Query(None)
+    title: Optional[str] = None
+    description: Optional[str] = None'''
+
+class Tag(BaseModel):
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
+
+class Genre(BaseModel):
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
+
+class Mood(BaseModel):
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")
+
+class Instrument(BaseModel):
+    name: str = Field(alias="name")
+    description: str = Field(alias="description")

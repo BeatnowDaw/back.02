@@ -1,11 +1,12 @@
 from datetime import timedelta
+from typing import List, Optional
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
 from model.user_shemas import NewUser
 from config.security import guardar_log, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user
-from config.db import users_collection
+from config.db import users_collection, post_collection
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import HTTPException, Depends, APIRouter
+from fastapi import HTTPException, Depends, APIRouter, Query
 
 # Iniciar router
 router = APIRouter()
@@ -32,3 +33,4 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                                        #, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+

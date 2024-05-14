@@ -3,23 +3,14 @@ from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 
-class MusicBase(BaseModel):
-    user_id: str = Field(alias="user_id")
-    licenses: list[str] = Field(alias="license_id")
-    bpm: int = Field(alias="bpm")
-    genre_id: str = Field(alias="genre_id")
-    moods: list[str] = Field(alias="moods")
-    instruments: list[str] = Field(alias="instruments")
-    tag_id: list[str] = Field(alias="tags")
-    license_id: list[str] = Field(alias="licenses")
 
-class Interactions(BaseModel):
+class Interaction(BaseModel):
     user_id: str = Field(alias="user_id")
     post_id: str = Field(alias="publication_id")
     like_date: Optional[datetime] = Field(default=None, alias="like_date")
     saved_date: Optional[datetime] = Field(default=None, alias="saved_date")
     dislike_date: Optional[datetime] = Field(default=None, alias="dislike_date")
-    #user: UserInDB = Field(alias="user")
+
 
 
 

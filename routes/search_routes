@@ -1,0 +1,55 @@
+#from model.post_shemas import SearchParams
+from model.user_shemas import NewUser, UserSearch
+from config.security import get_user_id, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_user
+from config.db import users_collection, post_collection
+from fastapi import HTTPException, Depends, APIRouter
+
+# Iniciar router
+router = APIRouter()
+
+'''#@router.post("/")
+async def search_posts(current_user: NewUser = Depends(get_current_user), params: SearchParams = Depends()):
+    user_id = await get_user_id(current_user.username)
+    query = {}
+    
+    # Agregar filtros directos si están presentes
+    for field, value in params.dict(exclude_none=True).items():
+        if field in ['genre', 'bpm', 'mood', 'key', 'title', 'description']:
+            query[field] = {"$regex": value, "$options": "i"}  # búsqueda insensible a mayúsculas
+        elif field in ['instruments', 'tags'] and value:
+            query[field] = {"$all": value}
+
+    # Realizar la consulta a la base de datos
+    try:
+        results = list(post_collection.find(query))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+
+    # Convertir los resultados de MongoDB en JSON serializable si es necesario
+    results = [doc for doc in results]
+
+    return results'''
+
+@router.post("/user/")
+async def search_user(params: UserSearch = Depends(), current_user: NewUser = Depends(get_current_user)):
+    username_query = params.username
+    query = {
+        "username": {
+            "$regex": f"^{username_query}",
+            "$options": "i",
+            "$ne": current_user.username  # Excluye el nombre de usuario actual
+        }
+    }
+
+    # Realizar la consulta a la base de datos
+    try:
+        # El método find devuelve un cursor, que luego convertimos en lista
+        results = list(users_collection.find(query).sort("username"))
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+
+    # Convertir los resultados de MongoDB en JSON serializable si es necesario
+    results = [{"username": doc["username"]} for doc in results if "username" in doc]
+
+    return results

@@ -30,3 +30,5 @@ class UserInfo(UserInDB):
     followers: Optional[list[str]] = Field(alias="followers")
     following: Optional[list[str]] = Field(alias="following")
 
+class UserSearch(BaseModel):
+    username: str
