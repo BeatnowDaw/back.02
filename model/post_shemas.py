@@ -34,16 +34,16 @@ class PostShowed(PostInDB):
     creator_username: Optional[str] = Field(default=None, alias="creator_username")
     isLiked: Optional[bool] = Field(default=False, alias="isLiked")
     isSaved: Optional[bool] = Field(default=False, alias="isSaved")
-
-'''class SearchParams(BaseModel):
+    
+class SearchPost(BaseModel):
     genre: Optional[str] = None
     bpm: Optional[int] = None
     mood: Optional[str] = None
-    instruments: Optional[List[str]] = Query(None)
+    instruments: Optional[List[str]] =None
     key: Optional[str] = None
-    tags: Optional[List[str]] = Query(None)
+    tags: Optional[List[str]] = None
     title: Optional[str] = None
-    description: Optional[str] = None'''
+    description: Optional[str] = None
 
 class Tag(BaseModel):
     name: str = Field(alias="name")
