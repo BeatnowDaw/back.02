@@ -234,15 +234,26 @@ async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     user_id = await get_user_id(current_user.username)
+    user_photo_dir = f"/var/www/html/beatnow/{user_id}/photo_profile"
+    default_photo_path = "/var/www/html/beatnow/res/default-profile.jpg"
+
     try:
-        # Conexión SSH y eliminación de la foto de perfil del usuario en el servidor
+        # Establish SSH connection and perform the operation
         with paramiko.SSHClient() as ssh:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
-            user_photo_dir = f"/var/www/html/beatnow/{user_id}/photo_profile"
-            ssh.exec_command(f"sudo cp /var/www/html/beatnow/res/default-profile.jpg {user_photo_dir}/photo_profile.png")
+            # Command to replace user's photo profile with default
+            command = f"sudo cp {default_photo_path} {user_photo_dir}/photo_profile.png"
+            stdin, stdout, stderr = ssh.exec_command(command)
+
+            # Wait for the command to finish and capture any errors
+            exit_status = stdout.channel.recv_exit_status()
+            if exit_status != 0:
+                error_message = stderr.read().decode()
+                raise HTTPException(status_code=500, detail=f"Command failed: {error_message}")
 
     except paramiko.SSHException as e:
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
@@ -261,28 +272,29 @@ async def change_photo_profile(file: UploadFile = File(...), current_user: NewUs
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    root_path = "/var/www/html/beatnow"  # Ruta raíz donde se almacenan las fotos de perfil
-    user_photo_dir = os.path.join(root_path, current_user.username, "photo_profile")  # Carpeta de fotos de perfil del usuario
+    root_path = "/var/www/html/beatnow"  # Root path where profile photos are stored
+    user_photo_dir = os.path.join(root_path, current_user.username, "photo_profile")  # User's profile photo directory
 
     try:
-        # Conexión SSH
+        # Establish SSH connection
         with paramiko.SSHClient() as ssh:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
-            # Verificar si el directorio del usuario existe, si no, crearlo
-            if not ssh.exec_command(f"test -d {user_photo_dir}")[1].read():
-                # Crear directorios en el servidor remoto
-                ssh.exec_command(f"sudo mkdir -p {user_photo_dir}")
-                ssh.exec_command(f"sudo chown -R $USER:$USER {user_photo_dir}")
+            # Verify if the user's directory exists, if not, create it
+            stdin, stdout, stderr = ssh.exec_command(f"test -d {user_photo_dir} || sudo mkdir -p {user_photo_dir}")
+            stdout.channel.recv_exit_status()  # Ensure command has completed
+            ssh.exec_command(f"sudo chown -R $USER:$USER {user_photo_dir}")
 
-            # Eliminar contenido existente en la carpeta de fotos de perfil del usuario
+            # Remove existing content in the user's profile photo folder
             ssh.exec_command(f"sudo rm -rf {user_photo_dir}/*")
 
-            # Guardar la nueva foto de perfil con un nombre único y formato png
+            # Save the new profile photo with a unique name and png format
+            sftp = ssh.open_sftp()
             file_path = os.path.join(user_photo_dir, "photo_profile.png")
-            with ssh.open_sftp().file(file_path, "wb") as buffer:
+            with sftp.file(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
+            sftp.close()
 
     except paramiko.SSHException as e:
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
