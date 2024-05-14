@@ -262,7 +262,6 @@ async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)
 
     return {"message": "Photo profile deleted successfully"}
 
-
 @router.post("/change_photo_profile")
 async def change_photo_profile(file: UploadFile = File(...), current_user: NewUser = Depends(get_current_user)):
     if not current_user:
@@ -282,17 +281,18 @@ async def change_photo_profile(file: UploadFile = File(...), current_user: NewUs
             ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
 
             # Verify if the user's directory exists, if not, create it
-            stdin, stdout, stderr = ssh.exec_command(f"test -d {user_photo_dir} || sudo mkdir -p {user_photo_dir}")
-            stdout.channel.recv_exit_status()  # Ensure command has completed
-            ssh.exec_command(f"sudo chown -R $USER:$USER {user_photo_dir}")
+            mkdir_command = f"test -d {user_photo_dir} || sudo mkdir -p {user_photo_dir}"
+            chown_command = f"sudo chown -R $USER:$USER {user_photo_dir}"
+            ssh.exec_command(mkdir_command).channel.recv_exit_status()
+            ssh.exec_command(chown_command).channel.recv_exit_status()
 
             # Remove existing content in the user's profile photo folder
-            ssh.exec_command(f"sudo rm -rf {user_photo_dir}/*")
+            ssh.exec_command(f"sudo rm -rf {user_photo_dir}/*").channel.recv_exit_status()
 
             # Save the new profile photo with a unique name and png format
             sftp = ssh.open_sftp()
             file_path = os.path.join(user_photo_dir, "photo_profile.png")
-            with sftp.file(file_path, "wb") as buffer:
+            with sftp.open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
             sftp.close()
 
