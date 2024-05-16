@@ -98,7 +98,7 @@ async def save_temporary_file(upload_file: UploadFile, post_id: str) -> str:
 
 @router.post("/upload", response_model=PostInDB)
 async def upload_post(
-    file: UploadFile = File(...),
+    cover_file: UploadFile = File(...),
     audio_file: UploadFile = File(...),
     title: str = Form(...),
     description: Optional[str] = Form(None),
@@ -126,7 +126,7 @@ async def upload_post(
     allowed_image_extensions = {".jpg", ".jpeg"}
     allowed_audio_extensions = {".wav", ".mp3", ".flac"}
 
-    if not file.filename.lower().endswith(tuple(allowed_image_extensions)):
+    if not cover_file.filename.lower().endswith(tuple(allowed_image_extensions)):
         raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
 
     if audio_file:
@@ -164,7 +164,7 @@ async def upload_post(
             # Guardar la nueva foto de perfil con un nombre único y formato jpg
             file_path = os.path.join(post_dir, "caratula.jpg")
             with ssh.open_sftp().file(file_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
+                shutil.copyfileobj(cover_file.file, buffer)
             if audio_file:
                 audio_file_path = os.path.join(post_dir, "audio.wav")
                 with ssh.open_sftp().file(audio_file_path, "wb") as buffer:

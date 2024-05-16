@@ -5,6 +5,7 @@ import shutil
 from bson import ObjectId
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
+from model.post_shemas import PostShowed
 from model.user_shemas import NewUser, User, UserInDB, UserProfile
 from model.lyrics_shemas import Lyrics
 from config.security import  guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
@@ -203,6 +204,7 @@ async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=
         lyric["_id"] = str(lyric["_id"])
     
     return user_lyrics
+
 
 
 
