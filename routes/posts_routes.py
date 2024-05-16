@@ -1,4 +1,3 @@
-import tempfile
 from config.security import SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, get_user_id
 import random
@@ -14,104 +13,21 @@ from routes.interactions_routes import count_likes, count_dislikes, count_saved
 from fastapi import File, UploadFile, HTTPException
 import os
 import shutil
-import zipfile
 from datetime import datetime
-import io
 
 router = APIRouter()
-
-# Definir la ruta donde se guardarán los archivos temporales
-TEMP_DIRECTORY = "/var/www/html/beatnow/temp"
-
-async def decompress_audio_on_server(post_dir: str, post_id: str):
-    try:
-        with paramiko.SSHClient() as ssh:
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-            
-            # Comando para descomprimir el archivo en el servidor
-            unzip_command = f"unzip {post_dir}audio_{post_id}.zip -d {post_dir}"
-            stdin, stdout, stderr = ssh.exec_command(unzip_command)
-            exit_status = stdout.channel.recv_exit_status()  # Espera a que termine el comando
-            
-            if exit_status != 0:
-                raise Exception(f"Error unzipping file: {stderr.read().decode()}")
-            else:
-                print("File decompressed successfully")
-                
-    except paramiko.SSHException as e:
-        raise HTTPException(status_code=500, detail=f"SSH error during decompression: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred during decompression: {str(e)}")
-
-async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_dir: str, file_extension: str):
-    try:
-        # Comprimir el archivo de audio
-        compressed_audio = await compress_audio(audio_file)
-
-        # Crear un archivo zip en memoria
-        zip_file = io.BytesIO()
-        with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            if audio_file:
-                if file_extension  in ["mp3"]:
-                    zipf.writestr(f"post_{post_id}.mp3", compressed_audio)
-                else:
-                    zipf.writestr(f"post_{post_id}.wav", compressed_audio)
-            
-
-        # Subir el archivo zip al servidor remoto
-        with paramiko.SSHClient() as ssh:
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-
-            with ssh.open_sftp().file(os.path.join(post_dir, f"audio_{post_id}.zip"), "wb") as buffer:
-                buffer.write(zip_file.getvalue())
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-
-async def compress_audio(audio_file: UploadFile) -> bytes:
-    try:
-        # Leer el archivo de audio en memoria
-        audio_content = await audio_file.read()
-
-        # Comprimir el archivo de audio
-        compressed_audio = io.BytesIO()
-        with zipfile.ZipFile(compressed_audio, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            zipf.writestr(audio_file.filename, audio_content)
-
-        return compressed_audio.getvalue()
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred while compressing audio: {str(e)}")
-
-
-async def save_temporary_file(upload_file: UploadFile, post_id: str) -> str:
-    try:
-        # Crear un archivo temporal con un nombre fijo
-        with tempfile.NamedTemporaryFile(prefix=f"beat_temporal_{post_id}", delete=False) as temp_file:
-            # Copiar los datos del archivo de carga en el archivo temporal
-            shutil.copyfileobj(upload_file.file, temp_file)
-            temp_file_name = temp_file.name  # Obtener el nombre del archivo temporal
-        # Devolver la ruta del archivo temporal creado
-        return temp_file_name
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-
 
 @router.post("/upload", response_model=PostInDB)
 async def upload_post(
     cover_file: UploadFile = File(...),
     audio_file: UploadFile = File(...),
     title: str = Form(...),
-    description: Optional[str] = Form(None),
-    genre: Optional[str] = Form(None),
-    tags: Optional[str] = Form(None),
-    moods: Optional[str] = Form(None),
-    instruments: Optional[str] = Form(None),
-    bpm: Optional[int] = Form(None),
+    description: Optional[str] = Form(...),
+    genre: Optional[str] = Form(...),
+    tags: Optional[str] = Form(...),
+    moods: Optional[str] = Form(...),
+    instruments: Optional[str] = Form(...),
+    bpm: Optional[int] = Form(...),
     current_user: NewUser = Depends(get_current_user)
 ):
     # Convertir strings de listas a listas de Python
@@ -184,15 +100,6 @@ async def upload_post(
                 
                 with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
                     shutil.copyfileobj(audio_file.file, buffer)
-
-            '''
-            # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
-            if audio_file:
-                # Subir el archivo temporal al servidor remoto
-                await compress_and_upload_audio(audio_file, post_id, post_dir, file_extension)
-                # Descomprimir el archivo en el servidor
-                await decompress_audio_on_server(post_dir, post_id)'''
-                
 
     except paramiko.SSHException as e:
         await post_collection.delete_one({"_id": result.inserted_id})
@@ -354,24 +261,22 @@ async def delete_publication(post_id: str, current_user: User = Depends(get_curr
     raise HTTPException(status_code=404, detail="Publication not found")
 
 
-# Listar todas las publicaciones
-@router.get("/user/{username}", response_model=List[Post])
-async def list_user_publications(username: str, current_user: User = Depends(get_current_user),
-                                 db=Depends(get_database)):
+@router.get("/user/{username}")
+async def list_user_publications(username: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Verificar si el usuario solicitado existe
     user_exists = await users_collection.find_one({"username": username})
     if not user_exists:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Buscar todas las publicaciones del usuario
-    user_id = await get_user_id(username)
+    user_id = str(user_exists["_id"])
     user_publications = await post_collection.find({"user_id": user_id}).to_list(length=None)
 
-    # Comprobar si se encontraron publicaciones
-    if user_publications:
-        return user_publications
-    else:
-        raise HTTPException(status_code=404, detail="User has no publications")
+    # Convertir _id a string y devolver las publicaciones
+    for post in user_publications:
+        post["_id"] = str(post["_id"])
+
+    return user_publications
 
 async def has_liked_post(post_id: str, current_user: User):
     user_id = await get_user_id(current_user.username)
@@ -439,4 +344,7 @@ async def count_user_posts(user_id: str, current_user: User = Depends(get_curren
     # Contar las publicaciones del usuario
     count = await post_collection.count_documents({"user_id": user_id})
     return count
+
+import hashlib
+
 

@@ -61,3 +61,50 @@ INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+ERROR:paramiko.transport:Socket exception: Se ha forzado la interrupción de una conexión existente por el host remoto (10054)
+ERROR:paramiko.transport:Socket exception: Se ha forzado la interrupción de una conexión existente por el host remoto (10054)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
