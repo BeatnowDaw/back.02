@@ -302,6 +302,11 @@ async def update_post(
         raise HTTPException(status_code=404, detail="Post not found")
     creator_id = post["user_id"]
     publication_date = post["publication_date"]
+    file_extension = audio_file.filename.split(".")[-1]
+    if file_extension  in ["mp3"]:
+        audio_format="mp3"
+    else:
+        audio_format="wav"
     new_post = PostInDB(
         title=title,
         description=description,
@@ -312,6 +317,7 @@ async def update_post(
         bpm=bpm,
         user_id=creator_id,
         publication_date=publication_date,
+        audio_format=audio_format,
         _id=post_id
     )
     
@@ -341,7 +347,10 @@ async def update_post(
                     with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
                         shutil.copyfileobj(cover_file.file, buffer)
                 if audio_file:
-                    audio_file_path = os.path.join(post_dir, "audio.wav")
+                    if file_extension  in ["mp3"]:
+                        audio_file_path = os.path.join(post_dir, "audio.mp3")
+                    else:
+                        audio_file_path = os.path.join(post_dir, "audio.wav")
                     with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
                         shutil.copyfileobj(audio_file.file, buffer)
     except paramiko.SSHException as e:
