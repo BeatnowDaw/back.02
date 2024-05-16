@@ -124,7 +124,7 @@ async def upload_post(
     )
     # Validar el tipo de archivo antes de continuar
     allowed_image_extensions = {".jpg", ".jpeg"}
-    allowed_audio_extensions = {".wav", ".mp3", ".flac"}
+    allowed_audio_extensions = {".wav", ".mp3"}
 
     if not cover_file.filename.lower().endswith(tuple(allowed_image_extensions)):
         raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
@@ -135,12 +135,18 @@ async def upload_post(
     user_id=await get_user_id(current_user.username)
     if not user_id:
         raise HTTPException(status_code=404, detail="User not found")
+    file_extension = audio_file.filename.split(".")[-1]
+    if file_extension  in ["mp3"]:
+        audio_format="mp3"
+    else:
+        audio_format="wav"
     # Crear el post en la base de datos
     result = None
     try:
         post = Post(
             user_id=str(ObjectId(user_id)),
             publication_date=datetime.now(),
+            audio_format=audio_format,
             **new_post.dict()
         )
         result = await post_collection.insert_one(post.dict())
@@ -166,7 +172,11 @@ async def upload_post(
             with ssh.open_sftp().file(file_path, "wb") as buffer:
                 shutil.copyfileobj(cover_file.file, buffer)
             if audio_file:
-                audio_file_path = os.path.join(post_dir, "audio.wav")
+                if file_extension  in ["mp3"]:
+                    audio_file_path = os.path.join(post_dir, "audio.mp3")
+                else:
+                    audio_file_path = os.path.join(post_dir, "audio.wav")
+                
                 with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
                     shutil.copyfileobj(audio_file.file, buffer)
 
