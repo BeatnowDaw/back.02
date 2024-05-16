@@ -2,12 +2,12 @@ import tempfile
 from config.security import SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, get_user_id
 import random
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, Form, HTTPException, Depends, UploadFile, File
 from bson import ObjectId
-from typing import List
+from typing import List, Optional
 import paramiko
 from model.post_shemas import Post, PostInDB, PostShowed, NewPost
-from config.db import get_database, post_collection, users_collection, interactions_collection, lyrics_collection
+from config.db import get_database, parse_list, post_collection, users_collection, interactions_collection, lyrics_collection
 from config.security import get_current_user, get_user_id, get_username
 from model.user_shemas import NewUser, User
 from routes.interactions_routes import count_likes, count_dislikes, count_saved
@@ -100,9 +100,28 @@ async def save_temporary_file(upload_file: UploadFile, post_id: str) -> str:
 async def upload_post(
     file: UploadFile = File(...),
     audio_file: UploadFile = File(...),
-    new_post: NewPost = Depends(),
-    current_user: NewUser = Depends(get_current_user),
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
+    genre: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
+    moods: Optional[str] = Form(None),
+    instruments: Optional[str] = Form(None),
+    bpm: Optional[int] = Form(None),
+    current_user: NewUser = Depends(get_current_user)
 ):
+    # Convertir strings de listas a listas de Python
+    tags_list = parse_list(tags)
+    moods_list = parse_list(moods)
+    instruments_list = parse_list(instruments)
+    new_post = NewPost(
+        title=title,
+        description=description,
+        tags=tags_list,
+        genre=genre,
+        moods=moods_list,
+        instruments=instruments_list,
+        bpm=bpm,
+    )
     # Validar el tipo de archivo antes de continuar
     allowed_image_extensions = {".jpg", ".jpeg"}
     allowed_audio_extensions = {".wav", ".mp3", ".flac"}
@@ -113,12 +132,9 @@ async def upload_post(
     if audio_file:
         if not audio_file.filename.lower().endswith(tuple(allowed_audio_extensions)):
             raise HTTPException(status_code=415, detail="Only MP3/WAV files are allowed for audio.")
-
-    # Obtener ID del usuario
-    user_id = await get_user_id(current_user.username)
-    if user_id == "Usuario no encontrado":
+    user_id=await get_user_id(current_user.username)
+    if not user_id:
         raise HTTPException(status_code=404, detail="User not found")
-
     # Crear el post en la base de datos
     result = None
     try:
@@ -164,93 +180,166 @@ async def upload_post(
                 '''
 
     except paramiko.SSHException as e:
-        if result:
-            # Eliminar el post de la base de datos si se ha creado antes de la excepción
-            await post_collection.delete_one({"_id": result.inserted_id})
+        await post_collection.delete_one({"_id": result.inserted_id})
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
     except Exception as e:
         if result:
             # Eliminar el post de la base de datos si se ha creado antes de la excepción
             await post_collection.delete_one({"_id": result.inserted_id})
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
+    existing_post = await post_collection.find_one({"_id": ObjectId(post_id)})
+    if not existing_post:
+        raise HTTPException(status_code=404, detail="Post not found")
     return PostInDB(_id=post_id, **post.dict())
 
-@router.put("/update/{post_id}", response_model=PostInDB)
+'''@router.put("/update/{post_id}", response_model=PostInDB)
 async def update_post(
     post_id: str,
-    file: UploadFile = File(None),
-    audio_file: UploadFile = File(None),
-    new_post: NewPost = Depends(),
-    current_user: NewUser = Depends(get_current_user),
+    cover_file: Optional[UploadFile] = File(None),
+    audio_file: Optional[UploadFile] = File(None),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    genre: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
+    moods: Optional[str] = Form(None),
+    instruments: Optional[str] = Form(None),
+    bpm: Optional[int] = Form(None),
+    current_user: NewUser = Depends(get_current_user)
 ):
-    # Validar el tipo de archivo antes de continuar
-    allowed_image_extensions = {".jpg", ".jpeg"}
-    allowed_audio_extensions = {".wav"}
-
-    if file and not file.filename.lower().endswith(tuple(allowed_image_extensions)):
-        raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
-
-    if audio_file and not audio_file.filename.lower().endswith(tuple(allowed_audio_extensions)):
-        raise HTTPException(status_code=415, detail="Only MP3/WAV files are allowed for audio.")
-
-    # Obtener la publicación existente
+    # Convertir strings de listas a listas de Python
+    tags_list = parse_list(tags)
+    moods_list = parse_list(moods)
+    instruments_list = parse_list(instruments)
+    post=await post_collection.find_one({"_id": ObjectId(post_id)})
+    creator_id = post["user_id"]
+    publication_date = post["publication_date"]
+    new_post = PostInDB(
+        title=title,
+        description=description,
+        genres=genre,
+        tags=tags_list,
+        moods=moods_list,
+        instruments=instruments_list,
+        bpm=bpm,
+        user_id=creator_id,
+        publication_date=publication_date,
+        id=post_id
+    )
+    # Verificar la existencia de la publicación y que el usuario actual sea el propietario
     existing_post = await post_collection.find_one({"_id": ObjectId(post_id)})
-    if existing_post is None:
+    if not existing_post:
         raise HTTPException(status_code=404, detail="Post not found")
-
-    # Obtener ID del usuario
     user_id = await get_user_id(current_user.username)
-    if user_id == "Usuario no encontrado":
-        raise HTTPException(status_code=404, detail="User not found")
-    if user_id!=new_post.user_id:
+    if user_id != existing_post["user_id"]:
         raise HTTPException(status_code=403, detail="You are not authorized to update this publication")
-    # Actualizar la publicación en la base de datos
+
+
+    # Actualizar la base de datos
+    update_result = await post_collection.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$set": {k: v for k, v in new_post.dict().items() if v is not None}}
+        )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to update publication")
+
+    # Manejo de archivos si se proporcionan
     try:
-        
-        # Crear una instancia de la clase Post con los campos existentes
-        post = Post(**existing_post)
-
-        # Actualizar solo los campos recibidos en la solicitud de actualización
-        for field, value in new_post.dict().items():
-            setattr(post, field, value)
-
-        
-        post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
-        if file:
-            # Configuración de SSH
+        if cover_file or audio_file:
+            post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
             with paramiko.SSHClient() as ssh:
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-                # Guardar la nueva foto con el nombre original
-                existing_image_path = os.path.join(post_dir, "caratula.jpg")
-                with ssh.open_sftp().file(existing_image_path, "wb") as buffer:
-                    shutil.copyfileobj(file.file, buffer)
+                if cover_file:
+                    cover_file_path = os.path.join(post_dir, "caratula.jpg")
+                    with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
+                        shutil.copyfileobj(cover_file.file, buffer)
                 if audio_file:
                     audio_file_path = os.path.join(post_dir, "audio.wav")
                     with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
                         shutil.copyfileobj(audio_file.file, buffer)
-                    '''# Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
+                        # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
                     if audio_file:
                         # Subir el archivo temporal al servidor remoto
-                        await compress_and_upload_audio(audio_file, post_id, post_dir)'''
-
-        # Actualizar la publicación en la base de datos
-            # Encuentra y actualiza el usuario en la base de datos
-        update_result = await users_collection.update_one(
-            {"_id": ObjectId(post.id)},
-            {"$set": {k: v for k, v in post.dict().items() if v is not None}}
-                )
-        if update_result.modified_count == 0:
-            raise HTTPException(status_code=500, detail="Failed to update publication")
-        update_post = await post_collection.find_one({"_id": ObjectId(post_id)})
-
+                        await compress_and_upload_audio(audio_file, post_id, post_dir)
     except paramiko.SSHException as e:
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+    # Devolver la publicación actualizada
+    updated_post = await post_collection.find_one({"_id": ObjectId(post_id)})
+    return updated_post.dict()'''
 
-    return PostInDB(**update_post)
+@router.put("/update/{post_id}", response_model=PostInDB)
+async def update_post(
+    post_id: str,
+    cover_file: UploadFile = File(None),
+    audio_file: UploadFile = File(None),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    genre: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
+    moods: Optional[str] = Form(None),
+    instruments: Optional[str] = Form(None),
+    bpm: Optional[int] = Form(None),
+    current_user: NewUser = Depends(get_current_user)
+):
+    # Convertir strings de listas a listas de Python
+    tags_list = parse_list(tags)
+    moods_list = parse_list(moods)
+    instruments_list = parse_list(instruments)
+    post=await post_collection.find_one({"_id": ObjectId(post_id)})
+    if not post:     
+        raise HTTPException(status_code=404, detail="Post not found")
+    creator_id = post["user_id"]
+    publication_date = post["publication_date"]
+    new_post = PostInDB(
+        title=title,
+        description=description,
+        genre=genre,
+        tags=tags_list,
+        moods=moods_list,
+        instruments=instruments_list,
+        bpm=bpm,
+        user_id=creator_id,
+        publication_date=publication_date,
+        _id=post_id
+    )
+    
+    user_id = await get_user_id(current_user.username)
+    if user_id != post["user_id"]:
+        raise HTTPException(status_code=403, detail="You are not authorized to update this publication")
+    updated_post= new_post.dict()
+
+    # Actualizar la base de datos
+    update_result = await post_collection.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$set": {k: v for k, v in updated_post.items() if v is not None}}
+        )
+
+    if update_result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to update publication")
+
+    # Manejo de archivos si se proporcionan
+    try:
+        if cover_file or audio_file:
+            post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
+            with paramiko.SSHClient() as ssh:
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
+                if cover_file:
+                    cover_file_path = os.path.join(post_dir, "caratula.jpg")
+                    with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
+                        shutil.copyfileobj(cover_file.file, buffer)
+                if audio_file:
+                    audio_file_path = os.path.join(post_dir, "audio.wav")
+                    with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
+                        shutil.copyfileobj(audio_file.file, buffer)
+    except paramiko.SSHException as e:
+        raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
+
+    # Devolver la publicación actualizada
+    updated_post = await post_collection.find_one({"_id": ObjectId(post_id)})
+    return PostInDB(**updated_post)
 
 
 
@@ -273,9 +362,9 @@ async def get_random_publication(current_user: User = Depends(get_current_user),
 async def read_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     post_dict = await post_collection.find_one({"_id": ObjectId(post_id)})
     if post_dict:
-        postindb = Post(**post_dict)
+        postindb = PostInDB(**post_dict)
         creator_name = await get_username(post_dict["user_id"])  # Use post_dict instead of post_id
-        post = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(), likes=await count_likes(post_id), dislikes=await count_dislikes(post_id),
+        post = PostShowed(**postindb.dict(), likes=await count_likes(post_id), dislikes=await count_dislikes(post_id),
                           saves=await count_saved(post_id), creator_username=creator_name,isLiked=await has_liked_post(post_id, current_user),
                           isSaved=await has_saved_post(post_id, current_user))
         return post

@@ -1,120 +1,24 @@
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:root:2024-05-10 18:17:44.961118 - Login failed - Incorrect username: aa
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:root:2024-05-10 18:56:50.040974 - Login failed - Incorrect username: aa
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:root:2024-05-13 15:25:28.513630 - Login successful for username: asa
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:root:2024-05-13 15:54:58.347574 - Login successful for username: string
-INFO:pymongo.serverSelection:{"message": "Waiting for suitable server to become available", "selector": "Primary()", "operation": "find", "topologyDescription": "<TopologyDescription id: 66421cf83c1698f8cdab956c, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('ac-7zrxalx-shard-00-00.v1mxd4q.mongodb.net', 27017) server_type: Unknown, rtt: None>, <ServerDescription ('ac-7zrxalx-shard-00-01.v1mxd4q.mongodb.net', 27017) server_type: Unknown, rtt: None>, <ServerDescription ('ac-7zrxalx-shard-00-02.v1mxd4q.mongodb.net', 27017) server_type: Unknown, rtt: None>]>", "clientId": {"$oid": "66421cf83c1698f8cdab956c"}, "remainingTimeMS": 30}
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
-INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
-INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
-INFO:paramiko.transport:Authentication (password) successful!
+INFO:root:2024-05-14 20:18:18.742491 - Login failed - Incorrect password for username: a
+INFO:root:2024-05-14 20:20:05.676627 - Login failed - Incorrect password for username: a
+INFO:root:2024-05-14 20:20:08.809139 - Login failed - Incorrect password for username: a
+INFO:root:2024-05-14 20:20:17.589929 - Login failed - Incorrect password for username: a
+INFO:root:2024-05-14 20:20:20.795077 - Login failed - Incorrect password for username: a
+INFO:root:2024-05-16 15:17:43.376829 - Login failed - Incorrect password for username: a
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
 INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
+INFO:root:2024-05-16 15:37:58.330203 - Login failed - Incorrect password for username: a
+INFO:root:2024-05-16 15:38:05.202975 - Login failed - Incorrect password for username: a
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 3] Opened sftp connection (server version 3)
+INFO:paramiko.transport.sftp:[chan 4] Opened sftp connection (server version 3)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport.sftp:[chan 0] Opened sftp connection (server version 3)
+INFO:paramiko.transport.sftp:[chan 1] Opened sftp connection (server version 3)

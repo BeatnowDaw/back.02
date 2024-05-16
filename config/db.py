@@ -1,3 +1,4 @@
+from typing import List, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.database import Database
 from pymongo.errors import PyMongoError
@@ -22,3 +23,8 @@ async def get_database() -> Database:
 # Manejador de excepciones para errores de base de datos
 async def handle_database_error(exception: PyMongoError):
     raise HTTPException(status_code=500, detail="Database error")
+
+def parse_list(value: Optional[str]) -> Optional[List[str]]:
+        if value:
+            return value.split(',')
+        return None

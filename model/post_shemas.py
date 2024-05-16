@@ -9,11 +9,11 @@ class NewPost(BaseModel):
     title: Optional[str] = Field(alias="title")
     description: Optional[str] = Field(alias="description")
     tags: Optional[list] = Field(alias="tags")
-    genres: str = Field(alias="genres")
+    genre: str = Field(alias="genre")
     moods: Optional[list] = Field(alias="moods")
     instruments: Optional[list] = Field(alias="instruments")
     bpm: Optional[int] = Field(alias="bpm")
-    key: Optional[str] = Field(alias="key")
+    #key: Optional[str] = Field(alias="key")
 
 class Post(NewPost):
     user_id: str = Field(alias="user_id")
