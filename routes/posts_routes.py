@@ -362,9 +362,9 @@ async def get_random_publication(current_user: User = Depends(get_current_user),
 async def read_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     post_dict = await post_collection.find_one({"_id": ObjectId(post_id)})
     if post_dict:
-        postindb = PostInDB(**post_dict)
+        postindb = Post(**post_dict)
         creator_name = await get_username(post_dict["user_id"])  # Use post_dict instead of post_id
-        post = PostShowed(**postindb.dict(), likes=await count_likes(post_id), dislikes=await count_dislikes(post_id),
+        post = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(), likes=await count_likes(post_id), dislikes=await count_dislikes(post_id),
                           saves=await count_saved(post_id), creator_username=creator_name,isLiked=await has_liked_post(post_id, current_user),
                           isSaved=await has_saved_post(post_id, current_user))
         return post
