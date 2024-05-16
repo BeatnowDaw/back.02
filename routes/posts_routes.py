@@ -44,7 +44,7 @@ async def decompress_audio_on_server(post_dir: str, post_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred during decompression: {str(e)}")
 
-async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_dir: str):
+async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_dir: str, file_extension: str):
     try:
         # Comprimir el archivo de audio
         compressed_audio = await compress_audio(audio_file)
@@ -52,7 +52,12 @@ async def compress_and_upload_audio(audio_file: UploadFile, post_id: str, post_d
         # Crear un archivo zip en memoria
         zip_file = io.BytesIO()
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            zipf.writestr(f"post_{post_id}.wav", compressed_audio)
+            if audio_file:
+                if file_extension  in ["mp3"]:
+                    zipf.writestr(f"post_{post_id}.mp3", compressed_audio)
+                else:
+                    zipf.writestr(f"post_{post_id}.wav", compressed_audio)
+            
 
         # Subir el archivo zip al servidor remoto
         with paramiko.SSHClient() as ssh:
@@ -184,10 +189,10 @@ async def upload_post(
             # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
             if audio_file:
                 # Subir el archivo temporal al servidor remoto
-                await compress_and_upload_audio(audio_file, post_id, post_dir)
+                await compress_and_upload_audio(audio_file, post_id, post_dir, file_extension)
                 # Descomprimir el archivo en el servidor
-                await decompress_audio_on_server(post_dir, post_id)
-                '''
+                await decompress_audio_on_server(post_dir, post_id)'''
+                
 
     except paramiko.SSHException as e:
         await post_collection.delete_one({"_id": result.inserted_id})
@@ -201,83 +206,6 @@ async def upload_post(
     if not existing_post:
         raise HTTPException(status_code=404, detail="Post not found")
     return PostInDB(_id=post_id, **post.dict())
-
-'''@router.put("/update/{post_id}", response_model=PostInDB)
-async def update_post(
-    post_id: str,
-    cover_file: Optional[UploadFile] = File(None),
-    audio_file: Optional[UploadFile] = File(None),
-    title: Optional[str] = Form(None),
-    description: Optional[str] = Form(None),
-    genre: Optional[str] = Form(None),
-    tags: Optional[str] = Form(None),
-    moods: Optional[str] = Form(None),
-    instruments: Optional[str] = Form(None),
-    bpm: Optional[int] = Form(None),
-    current_user: NewUser = Depends(get_current_user)
-):
-    # Convertir strings de listas a listas de Python
-    tags_list = parse_list(tags)
-    moods_list = parse_list(moods)
-    instruments_list = parse_list(instruments)
-    post=await post_collection.find_one({"_id": ObjectId(post_id)})
-    creator_id = post["user_id"]
-    publication_date = post["publication_date"]
-    new_post = PostInDB(
-        title=title,
-        description=description,
-        genres=genre,
-        tags=tags_list,
-        moods=moods_list,
-        instruments=instruments_list,
-        bpm=bpm,
-        user_id=creator_id,
-        publication_date=publication_date,
-        id=post_id
-    )
-    # Verificar la existencia de la publicación y que el usuario actual sea el propietario
-    existing_post = await post_collection.find_one({"_id": ObjectId(post_id)})
-    if not existing_post:
-        raise HTTPException(status_code=404, detail="Post not found")
-    user_id = await get_user_id(current_user.username)
-    if user_id != existing_post["user_id"]:
-        raise HTTPException(status_code=403, detail="You are not authorized to update this publication")
-
-
-    # Actualizar la base de datos
-    update_result = await post_collection.update_one(
-        {"_id": ObjectId(post_id)},
-        {"$set": {k: v for k, v in new_post.dict().items() if v is not None}}
-        )
-
-    if update_result.modified_count == 0:
-        raise HTTPException(status_code=500, detail="Failed to update publication")
-
-    # Manejo de archivos si se proporcionan
-    try:
-        if cover_file or audio_file:
-            post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
-            with paramiko.SSHClient() as ssh:
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-                if cover_file:
-                    cover_file_path = os.path.join(post_dir, "caratula.jpg")
-                    with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
-                        shutil.copyfileobj(cover_file.file, buffer)
-                if audio_file:
-                    audio_file_path = os.path.join(post_dir, "audio.wav")
-                    with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
-                        shutil.copyfileobj(audio_file.file, buffer)
-                        # Guardar el archivo de audio con el nombre "beat.wav" o "beat.mp3"
-                    if audio_file:
-                        # Subir el archivo temporal al servidor remoto
-                        await compress_and_upload_audio(audio_file, post_id, post_dir)
-    except paramiko.SSHException as e:
-        raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
-    
-    # Devolver la publicación actualizada
-    updated_post = await post_collection.find_one({"_id": ObjectId(post_id)})
-    return updated_post.dict()'''
 
 @router.put("/update/{post_id}", response_model=PostInDB)
 async def update_post(
