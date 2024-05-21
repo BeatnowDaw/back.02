@@ -19,6 +19,8 @@ class Post(NewPost):
     user_id: str = Field(alias="user_id")
     publication_date: datetime = Field(alias="publication_date")
     audio_format: str = Field(alias="audio_format")
+    likes: int = Field(alias="likes")
+    saves: int = Field(alias="saved")
     #beat_info: MusicBase._id = Field(alias="beat_info")
 
 class PostInDB(Post):

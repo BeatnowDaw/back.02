@@ -10,7 +10,13 @@ router = APIRouter()
 # Función para verificar si una interacción ya existe para un usuario en una publicación
 async def check_interaction_exists(user_id: str, post_id: str, interaction_type: str, db):
     interaction = await interactions_collection.find_one({"user_id": user_id, "post_id": post_id})
-    if interaction and interaction.get(interaction_type):
+    if interaction and  interaction.get(interaction_type):
+        raise HTTPException(status_code=400, detail=f"{interaction_type.capitalize()} already exists")
+    return
+
+async def check_uninteraction_exists(user_id: str, post_id: str, interaction_type: str, db):
+    interaction = await interactions_collection.find_one({"user_id": user_id, "post_id": post_id})
+    if interaction and interaction.get(interaction_type) is None:
         raise HTTPException(status_code=400, detail=f"{interaction_type.capitalize()} already exists")
     return
 
@@ -44,7 +50,7 @@ async def save_publication(post_id: str, current_user: NewUser = Depends(get_cur
         raise HTTPException(status_code=500, detail="Failed to save publication")
     return {"message": "Publication saved successfully"}
 
-# Dar dislike a publicación
+'''# Dar dislike a publicación
 @router.post("/dislike/{post_id}")
 async def add_dislike(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
@@ -57,12 +63,13 @@ async def add_dislike(post_id: str, current_user: NewUser = Depends(get_current_
     )
     if result.modified_count == 0 and result.upserted_id is None:
         raise HTTPException(status_code=500, detail="Failed to add dislike")
-    return {"message": "Dislike added successfully"}
+    return {"message": "Dislike added successfully"}'''
 # Quitar like a publicación
 @router.post("/unlike/{post_id}")
 async def remove_like(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
+    await check_uninteraction_exists(user_id, post_id, "like_date", db)
     result = await interactions_collection.update_one(
         {"user_id": user_id, "post_id": post_id},
         {"$unset": {"like_date": ""}}
@@ -76,6 +83,7 @@ async def remove_like(post_id: str, current_user: NewUser = Depends(get_current_
 async def remove_saved(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
+    await check_uninteraction_exists(user_id, post_id, "saved_date", db)
     result = await interactions_collection.update_one(
         {"user_id": user_id, "post_id": post_id},
         {"$unset": {"saved_date": ""}}
@@ -84,7 +92,7 @@ async def remove_saved(post_id: str, current_user: NewUser = Depends(get_current
         raise HTTPException(status_code=500, detail="Failed to remove saved publication")
     return {"message": "Saved publication removed successfully"}
 
-# Quitar dislike a publicación
+'''# Quitar dislike a publicación
 @router.post("/undislike/{post_id}")
 async def remove_dislike(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
@@ -95,7 +103,7 @@ async def remove_dislike(post_id: str, current_user: NewUser = Depends(get_curre
     )
     if result.modified_count == 0:
         raise HTTPException(status_code=500, detail="Failed to remove dislike")
-    return {"message": "Dislike removed successfully"}
+    return {"message": "Dislike removed successfully"}'''
 
 # Contar el número de likes de una publicación
 #@router.get("/count/likes/{post_id}")

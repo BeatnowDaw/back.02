@@ -349,3 +349,11 @@ async def check_username(username: str):
     if existing_user:
         return {"status": "ko", "detail": "Username already registered"}
     return {"status": "ok", "detail": "Username is available"}
+
+@router.get("/check-email")
+async def check_email(email: str):
+    # Check if the username is already taken
+    existing_user = await users_collection.find_one({"email": email})
+    if existing_user:
+        return {"status": "ko", "detail": "Email already registered"}
+    return {"status": "ok", "detail": "Email is available"}

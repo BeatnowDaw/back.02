@@ -68,6 +68,8 @@ async def upload_post(
             user_id=str(ObjectId(user_id)),
             publication_date=datetime.now(),
             audio_format=audio_format,
+            likes=0,
+            saves=0,
             **new_post.dict()
         )
         result = await post_collection.insert_one(post.dict())
@@ -153,6 +155,8 @@ async def update_post(
         user_id=creator_id,
         publication_date=publication_date,
         audio_format=audio_format,
+        likes=count_likes(post_id),
+        saves=count_saved(post_id),
         _id=post_id
     )
     
@@ -218,8 +222,7 @@ async def read_publication(post_id: str, current_user: User = Depends(get_curren
     if post_dict:
         postindb = Post(**post_dict)
         creator_name = await get_username(post_dict["user_id"])  # Use post_dict instead of post_id
-        post = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(), likes=await count_likes(post_id), dislikes=await count_dislikes(post_id),
-                          saves=await count_saved(post_id), creator_username=creator_name,isLiked=await has_liked_post(post_id, current_user),
+        post = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(),creator_username=creator_name,isLiked=await has_liked_post(post_id, current_user),
                           isSaved=await has_saved_post(post_id, current_user))
         return post
     else:

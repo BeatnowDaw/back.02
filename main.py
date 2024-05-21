@@ -1,5 +1,7 @@
+import asyncio
 from fastapi import FastAPI
 from pymongo.errors import PyMongoError
+from config.changeStream import watch_changes
 from routes.users_routes import router as users_router
 from routes.posts_routes import router as posts_router
 from routes.interactions_routes import router as interactions_router
@@ -36,6 +38,12 @@ app.include_router(filter_router, prefix="/v1/api/filter")
 app.include_router(routes_router)
 # Manejador de excepciones global para errores de base de datos
 app.add_exception_handler(PyMongoError, handle_database_error)
+
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(watch_changes())
+
 def main():
     # Iniciar el servidor de Prometheus
     start_http_server(8000)
