@@ -13,11 +13,9 @@ class Interaction(BaseModel):
 
 
 
-
 # Schemas para comprobar uso
 '''
-class Tag(BaseModel):
-    name: str = Field(alias="name")
+
 
 class LicenseType(BaseModel):
     license_type: str = Field(alias="license_type")
@@ -28,20 +26,6 @@ class License(BaseModel):
     user_description: str = Field(alias="user_description")
     post_id: str = Field(alias="post_id")
     price: float = Field(alias="price")
-
-class Genre(BaseModel):
-    name: str = Field(alias="name")
-    description: str = Field(alias="description")
-
-class Mood(BaseModel):
-    name: str = Field(alias="name")
-    description: str = Field(alias="description")
-
-class Instrument(BaseModel):
-    name: str = Field(alias="name")
-    description: str = Field(alias="description")
-
-
 
 class Purchase(BaseModel):
     buyer_user_id: str = Field(alias="user_id")
