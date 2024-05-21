@@ -207,7 +207,6 @@ async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=
 
 
 
-
 @router.get("/profile/{user_id}", response_model=UserProfile)
 async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_dict = await users_collection.find_one({"_id": ObjectId(user_id)})

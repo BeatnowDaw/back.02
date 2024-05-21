@@ -43,8 +43,7 @@ class SearchPost(BaseModel):
     instruments: Optional[List[str]] =None
     key: Optional[str] = None
     tags: Optional[List[str]] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
+    search: Optional[str] = None
 
 class Tag(BaseModel):
     name: str = Field(alias="name")

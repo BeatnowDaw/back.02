@@ -1,37 +1,77 @@
-from model.post_shemas import SearchPost
-from typing import List
+from model.post_shemas import PostInDB, SearchPost
+from typing import List, Optional
 from model.user_shemas import NewUser, UserInDB, UserSearch
 from config.security import  get_current_user, get_user_id
-from config.db import users_collection, db
-from fastapi import HTTPException, Depends, APIRouter
+from config.db import users_collection, db, post_collection
+from fastapi import Form, HTTPException, Depends, APIRouter
 from Levenshtein import distance as levenshtein_distance
+import difflib
 
 # Iniciar router
 router = APIRouter()
 
-@router.post("/")
-async def search_posts(current_user: NewUser = Depends(get_current_user), params: SearchPost = Depends()):
+@router.post("/search_posts", response_model=List[PostInDB])
+async def search_posts(
+    genre: Optional[str] = Form(None),
+    moods: Optional[str] = Form(None),
+    instruments: Optional[str] = Form(None),
+    bpm: Optional[int] = Form(None),
+    search: Optional[str] = Form(None),
+    current_user: NewUser = Depends(get_current_user)
+):
     user_id = await get_user_id(current_user.username)
-    query = {"user_id": {"$ne": user_id}}  # Excluir posts del usuario actual
+    query = {"user_id": {"$ne": user_id}}  # Exclude posts from the current user
 
-    or_conditions = []
-    for field, value in params.dict(exclude={'none': True}).items():  # Excluir campos con None
-        if value is not None and value != '':  # Comprobar adicionalmente por valores vacíos
-            if field in ['genre', 'bpm', 'mood', 'key', 'title', 'description']:
-                or_conditions.append({field: {"$regex": value, "$options": "i"}})
-            elif field in ['instruments', 'tags']:
-                or_conditions.append({field: {"$all": value}})
+    # Add exact match filters for 'genre', 'bpm', 'moods', and 'instruments'
+    if genre:
+        query["genre"] = genre
+    if bpm is not None:
+        query["bpm"] = bpm
+    if moods:
+        query["moods"] = moods
+    if instruments:
+        query["instruments"] = {"$all": instruments.split(",")}
 
-    if or_conditions:
-        query["$or"] = or_conditions
+    user_id = await get_user_id(current_user.username)
+    query = {"user_id": {"$ne": user_id}}  # Exclude posts from the current user
+
+    # Add exact match filters for 'genre', 'bpm', 'moods', and 'instruments'
+    if genre:
+        query["genre"] = genre
+    if bpm is not None:
+        query["bpm"] = bpm
+    if moods:
+        query["moods"] = moods
+    if instruments:
+        query["instruments"] = {"$all": instruments.split(",")}
 
     try:
-        post_collection = db.post_collection
         cursor = post_collection.find(query)
         results = [document async for document in cursor]  # Asynchronous list comprehension
+
+        # Convert ObjectId to string for the results
+        for document in results:
+            document["_id"] = str(document["_id"])
+
+        if search:
+            # Sort results based on similarity to 'search' in title, tags, and description
+            def similarity_score(post):
+                title_similarity = difflib.SequenceMatcher(None, search.lower(), post.get("title", "").lower()).ratio()
+                tags_similarity = max([difflib.SequenceMatcher(None, search.lower(), tag.lower()).ratio() for tag in post.get("tags", [])]) if post.get("tags") else 0
+                description_similarity = difflib.SequenceMatcher(None, search.lower(), post.get("description", "").lower()).ratio()
+                return (title_similarity, tags_similarity, description_similarity)
+
+            results = sorted(results, key=similarity_score, reverse=True)
+
+        return results
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
-    return results
+
+
+
+
+
 
 @router.post("/user/", response_model=List[UserInDB])
 async def search_user(params: UserSearch = Depends(), current_user: UserInDB = Depends(get_current_user)):

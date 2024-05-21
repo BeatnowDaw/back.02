@@ -225,25 +225,7 @@ async def read_publication(post_id: str, current_user: User = Depends(get_curren
     else:
         raise HTTPException(status_code=404, detail="Publication not found")
 
-@router.put("/{post_id}", response_model=PostInDB)
-async def update_publication(post_id: str, publication: NewPost, current_user: User = Depends(get_current_user),
-                             db=Depends(get_database)):
-    existing_publication = await post_collection.find_one({"_id": ObjectId(post_id)})
-    if existing_publication:
-        if str(existing_publication["user_id"]) != str(await get_user_id(current_user.username)):
-            raise HTTPException(status_code=403, detail="You are not authorized to update this publication")
 
-        # Actualizar los datos existentes con los datos de la publicación
-        existing_publication.update(publication.dict(exclude_unset=True))
-
-        # Actualizar la publicación en la base de datos
-        result = await post_collection.update_one({"_id": ObjectId(post_id)}, {"$set": existing_publication})
-
-        # Convertir ObjectId a string para el retorno
-        existing_publication["_id"] = str(existing_publication["_id"])
-        return existing_publication
-    else:
-        raise HTTPException(status_code=404, detail="Publication not found")
 
 #no elimina la publicacion de la base de datos ni servidor
 # Eliminar publicación por ID
@@ -261,7 +243,7 @@ async def delete_publication(post_id: str, current_user: User = Depends(get_curr
     raise HTTPException(status_code=404, detail="Publication not found")
 
 
-@router.get("/user/{username}")
+@router.get("/user/{username}",response_model=List[PostInDB])
 async def list_user_publications(username: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Verificar si el usuario solicitado existe
     user_exists = await users_collection.find_one({"username": username})
@@ -270,13 +252,12 @@ async def list_user_publications(username: str, current_user: User = Depends(get
 
     # Buscar todas las publicaciones del usuario
     user_id = str(user_exists["_id"])
-    user_publications = await post_collection.find({"user_id": user_id}).to_list(length=None)
-
-    # Convertir _id a string y devolver las publicaciones
-    for post in user_publications:
-        post["_id"] = str(post["_id"])
-
-    return user_publications
+    user_publications = post_collection.find({"user_id": user_id})
+    results = []
+    async for document in user_publications:  # Asynchronous iteration
+            document["_id"] = str(document["_id"])  # Convert ObjectId to string
+            results.append(document)
+            return results
 
 async def has_liked_post(post_id: str, current_user: User):
     user_id = await get_user_id(current_user.username)
@@ -345,6 +326,6 @@ async def count_user_posts(user_id: str, current_user: User = Depends(get_curren
     count = await post_collection.count_documents({"user_id": user_id})
     return count
 
-import hashlib
+
 
 
