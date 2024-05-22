@@ -11,7 +11,13 @@ class Interaction(BaseModel):
     saved_date: Optional[datetime] = Field(default=None, alias="saved_date")
     dislike_date: Optional[datetime] = Field(default=None, alias="dislike_date")
 
+class Mail_Code(BaseModel):
+    user_id: str = Field(alias="user_id")
+    code: str = Field(alias="code")
 
+class PasswordResetRequest(BaseModel):
+    user_id: str = Field(alias="user_id")
+    code: str = Field(alias="code")
 
 # Schemas para comprobar uso
 '''

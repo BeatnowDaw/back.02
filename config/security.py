@@ -68,7 +68,7 @@ async def get_user_id(username: str):
     if user:
         return str(user["_id"])
     else:
-        return "Usuario no encontrado"  # O maneja esto de otra forma
+        return "Usuario no encontrado" 
 async def get_username(user_id: str):
     user = await users_collection.find_one({"_id": ObjectId(user_id)})
     if user:

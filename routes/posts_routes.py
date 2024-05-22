@@ -139,11 +139,15 @@ async def update_post(
         raise HTTPException(status_code=404, detail="Post not found")
     creator_id = post["user_id"]
     publication_date = post["publication_date"]
-    file_extension = audio_file.filename.split(".")[-1]
-    if file_extension  in ["mp3"]:
-        audio_format="mp3"
+    
+    if audio_file:
+        file_extension = audio_file.filename.split(".")[-1]
+        if file_extension  in ["mp3"]:
+            audio_format="mp3"
+        else:
+            audio_format="wav"
     else:
-        audio_format="wav"
+        audio_format=post["audio_format"]
     new_post = PostInDB(
         title=title,
         description=description,
@@ -155,8 +159,8 @@ async def update_post(
         user_id=creator_id,
         publication_date=publication_date,
         audio_format=audio_format,
-        likes=count_likes(post_id),
-        saves=count_saved(post_id),
+        likes=await count_likes(post_id),
+        saves=await count_saved(post_id),
         _id=post_id
     )
     

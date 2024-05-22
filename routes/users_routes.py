@@ -5,16 +5,17 @@ import shutil
 from bson import ObjectId
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
+from requests import post
 from model.post_shemas import PostShowed
 from model.user_shemas import NewUser, User, UserInDB, UserProfile
 from model.lyrics_shemas import Lyrics
 from config.security import  guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
-from config.db import users_collection, interactions_collection, get_database, lyrics_collection, follows_collection, post_collection
+from config.db import parse_list, users_collection, interactions_collection, get_database, lyrics_collection, follows_collection, post_collection
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import File, HTTPException, Depends, UploadFile, status, APIRouter
 import paramiko
-from routes.follow_routes import get_follower, get_following
+from routes.follow_routes import count_followers, count_following
 from routes.posts_routes import list_user_publications
 import pymongo
 
@@ -221,8 +222,31 @@ async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_cur
                 isFollowing = 1
             else:
                 isFollowing = -1
-        profile = UserProfile(**userindb.dict(),_id=str(ObjectId(user_id)),  followers = await get_follower(user_id), following = await get_following(user_id),
-                          post_num = await lyrics_collection.count_documents({"user_id": user_id}), post= await list_user_publications(user_id), is_following = isFollowing )
+        _followers = await count_followers(user_id)
+        if _followers==None:
+            _followers = 0
+        _following = await count_following(user_id)
+        if _following==None:
+            _following = 0
+        post_count = await post_collection.count_documents({"user_id": user_id})
+        if post_count==None:
+            post_count = 0
+        user_publications = post_collection.find({"user_id": user_id})
+        results = []
+        async for document in user_publications:  # Asynchronous iteration
+            document["_id"] = str(document["_id"])  # Convert ObjectId to string
+            results.append(document)
+
+
+        profile = UserProfile(
+            **userindb.dict(),
+            _id=str(ObjectId(user_id)),
+            followers=_followers["followers_count"],
+            following=_following["following_count"],
+            post_num=post_count,
+            post=results,
+            is_following=isFollowing
+        )
         return profile
     else:
         raise HTTPException(status_code=404, detail="User id not Found")

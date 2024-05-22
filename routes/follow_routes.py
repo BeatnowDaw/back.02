@@ -4,7 +4,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
 from model.follow_shemas import Follow
 from model.user_shemas import NewUser
-from config.db import follows_collection, get_database, users_collection
+from config.db import follows_collection, get_database, follows_collection
 from config.security import get_current_user, get_user_id
 
 router = APIRouter()
@@ -60,6 +60,9 @@ async def count_followers(user_id_followed: str, current_user: NewUser = Depends
     count = await follows_collection.count_documents({"user_id_followed": user_id_followed})
     return {"user_id_followed": user_id_followed, "followers_count": count}
 
+async def count_following(user_id_follower: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
+    count = await follows_collection.count_documents({"user_id_follower": user_id_follower})
+    return {"user_id_follower": user_id_follower, "following_count": count}
 #@router.get("/followers/{user_id_followed}")
 async def get_follower(user_id_followed: str,  db=Depends(get_database),current_user: NewUser = Depends(get_current_user)):
     followers = await follows_collection.find({"user_id_followed": user_id_followed}).to_list(None)
@@ -99,7 +102,7 @@ async def get_followers(user_id_followed: str, db = Depends(get_database)):
 @router.get("/following/{user_id_following}")
 async def get_following(user_id_following: str, db = Depends(get_database)):
     # Recuperar todos los documentos que tienen el user_id_following
-    following_docs = await db.follows_collection.find({"user_id_following": user_id_following}).to_list(None)
+    following_docs = await follows_collection.find({"user_id_following": user_id_following}).to_list(None)
     
     # Extraer los user_ids de los usuarios seguidos
     following_ids = [doc["user_id_followed"] for doc in following_docs]

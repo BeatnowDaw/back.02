@@ -15,6 +15,8 @@ follows_collection = db['Follows']
 genres_collection = db['Genres']
 moods_collection = db['Moods']
 instruments_collection = db['Instruments']
+mail_code_collection = db['MailCode']
+password_reset_collection = db['PasswordReset']
 
 
 
