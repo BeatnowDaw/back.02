@@ -2,13 +2,11 @@ import bcrypt
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from config.mail import send_email
 from config.security import get_current_user, get_user_id
-from dotenv import load_dotenv
 from model.user_shemas import NewUser, User
 import random
 from config.db import mail_code_collection, password_reset_collection
 from model.shemas import Mail_Code, PasswordResetRequest
 
-load_dotenv()
 
 router = APIRouter()
 
@@ -75,11 +73,9 @@ async def send_confirmation(background_tasks: BackgroundTasks,user: NewUser = De
         print(f"Error: {e}")  # Print the error message
     return {"error": str(e)}
 
-def generate_reset_token():
-    token = ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=32))
-    return token
 
-async def create_and_save_reset_request(user: User):
+
+async def create_request_password(user: User):
     reset_token = generate_reset_token()
     user_id = await get_user_id(user.username)
     reset_request = PasswordResetRequest(user_id=user_id, reset_token=reset_token)
