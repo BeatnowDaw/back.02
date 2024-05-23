@@ -8,7 +8,7 @@ from model.user_shemas import User
 # Iniciar router
 router = APIRouter()
 
-@router.post("/genres")
+@router.get("/genres")
 async def list_genres(current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Verificar si el usuario solicitado existe
     user_exists = await users_collection.find_one({"username": current_user.username})
@@ -22,7 +22,7 @@ async def list_genres(current_user: User = Depends(get_current_user), db=Depends
 
     return results
 
-@router.post("/moods")
+@router.get("/moods")
 async def list_moods(current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Verificar si el usuario solicitado existe
     user_exists = await users_collection.find_one({"username": current_user.username})
@@ -36,7 +36,7 @@ async def list_moods(current_user: User = Depends(get_current_user), db=Depends(
 
     return results
 
-@router.post("/instruments")
+@router.get("/instruments")
 async def list_instruments(current_user: User = Depends(get_current_user), db=Depends(get_database)):
     # Verificar si el usuario solicitado existe
     user_exists = await users_collection.find_one({"username": current_user.username})

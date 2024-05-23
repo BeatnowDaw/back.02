@@ -66,6 +66,16 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         raise HTTPException(status_code=403, detail="Inactive user")
     return user
 
+async def get_current_user_without_confirmation(token: Annotated[str, Depends(oauth2_scheme)]):
+    user = await decode_token(token)  # Ensure this is awaited
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
 async def get_user_id(username: str):
     user = await users_collection.find_one({"username": username})
     if user:

@@ -1,8 +1,9 @@
 import bcrypt
+from bson import ObjectId
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 import jwt
 from config.mail import send_email
-from config.security import ALGORITHM, SECRET_KEY, get_current_user, get_user, get_user_id, get_username
+from config.security import ALGORITHM, SECRET_KEY, get_current_user, get_current_user_without_confirmation, get_user, get_user_id, get_username
 from model.user_shemas import NewUser, User
 import random
 from config.db import mail_code_collection,users_collection
@@ -29,8 +30,10 @@ async def create_and_save_confirmation_code(user: User):
     return confirmation_code
 
 @router.post("/send-confirmation/")
-async def send_confirmation(user: NewUser = Depends(get_current_user)):
+async def send_confirmation(user: NewUser = Depends(get_current_user_without_confirmation)):
     try:
+        if user.is_active:
+            raise HTTPException(status_code=400, detail="User already confirmed")
         confirmation_code = await create_and_save_confirmation_code(user)
         subject = "Confirmación de Registro"
         html_content = f"""
@@ -69,7 +72,7 @@ async def send_confirmation(user: NewUser = Depends(get_current_user)):
 
 
         send_email(user.email, subject, html_content)
-        return {"message": "Correo de confirmación enviado"}
+        return {"message": "Correo de confirmación enviado", "codigo": confirmation_code}
     except Exception as e:
         print(f"Error: {e}")  # Print the error message
     return {"error": str(e)}
@@ -82,20 +85,22 @@ async def verify_confirmation_code(user: User, provided_code: str):
         raise HTTPException(status_code=404, detail="No code found for this user")
 
     # Compara el hash del código proporcionado con el hash almacenado
-    if bcrypt.checkpw(provided_code.encode('utf-8'), stored_code['code']):
+    if bcrypt.checkpw(provided_code.encode('utf-8'), stored_code['code'].encode('utf-8')):
         return True  
 
     return False 
 
 @router.post("/confirmation/")
-async def confirmation(code: str, user: NewUser = Depends(get_current_user)):
+async def confirmation(code: str, user: NewUser = Depends(get_current_user_without_confirmation)):
     confirmation = await verify_confirmation_code(user, code)
     if not confirmation:
         raise HTTPException(status_code=400, detail="Invalid code")
     else:
         user_id=await get_user_id(user.username)
         await mail_code_collection.delete_many({"user_id": user_id})
-        await users_collection.update_one({"_id": user_id}, {"$set": {"is_active": True}})
+        result = await users_collection.update_one({"_id": ObjectId(user_id)}, {"$set": {"is_active": True}})
+        if result.modified_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to modify user")
     return {"message": "Ok"}
 
 async def create_request_password(user: User):
@@ -107,8 +112,12 @@ async def create_request_password(user: User):
     return token
 
 @router.post("/send-password-reset/")
-async def send_password_reset(user: User = Depends(get_current_user)):
+async def send_password_reset(mail: str):
     try:
+        user_find = await users_collection.find_one({"email": mail})
+        if not user_find:
+            raise HTTPException(status_code=404, detail="Mail not found")
+        user = NewUser(**user_find)
         reset_token = await create_request_password(user)
         subject = "Password Reset"
         reset_link = "https://yourwebsite.com/reset-password/{reset_token}"

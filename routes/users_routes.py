@@ -264,7 +264,7 @@ async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_cur
     else:
         raise HTTPException(status_code=404, detail="User id not Found")
 
-@router.post("/delete_photo_profile")
+@router.delete("/delete_photo_profile")
 async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(
@@ -300,7 +300,7 @@ async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)
 
     return {"message": "Photo profile deleted successfully"}
 
-@router.post("/change_photo_profile")
+@router.put("/change_photo_profile")
 async def change_photo_profile(file: UploadFile = File(...), current_user: NewUser = Depends(get_current_user)):
     if not current_user:
         raise HTTPException(

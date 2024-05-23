@@ -65,7 +65,7 @@ async def add_dislike(post_id: str, current_user: NewUser = Depends(get_current_
         raise HTTPException(status_code=500, detail="Failed to add dislike")
     return {"message": "Dislike added successfully"}'''
 # Quitar like a publicación
-@router.post("/unlike/{post_id}")
+@router.delete("/unlike/{post_id}")
 async def remove_like(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
@@ -79,7 +79,7 @@ async def remove_like(post_id: str, current_user: NewUser = Depends(get_current_
     return {"message": "Like removed successfully"}
 
 # Quitar de guardados una publicación
-@router.post("/unsave/{post_id}")
+@router.delete("/unsave/{post_id}")
 async def remove_saved(post_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     await check_post_exists(post_id, db)
     user_id = await get_user_id(current_user.username)
