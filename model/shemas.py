@@ -15,9 +15,7 @@ class Mail_Code(BaseModel):
     user_id: str = Field(alias="user_id")
     code: str = Field(alias="code")
 
-class PasswordResetRequest(BaseModel):
-    user_id: str = Field(alias="user_id")
-    code: str = Field(alias="code")
+
 
 # Schemas para comprobar uso
 '''

@@ -1,11 +1,12 @@
 import bcrypt
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
+import jwt
 from config.mail import send_email
-from config.security import get_current_user, get_user_id
+from config.security import ALGORITHM, SECRET_KEY, get_current_user, get_user, get_user_id
 from model.user_shemas import NewUser, User
 import random
-from config.db import mail_code_collection, password_reset_collection
-from model.shemas import Mail_Code, PasswordResetRequest
+from config.db import mail_code_collection,users_collection
+from model.shemas import Mail_Code
 
 
 router = APIRouter()
@@ -74,24 +75,22 @@ async def send_confirmation(background_tasks: BackgroundTasks,user: NewUser = De
     return {"error": str(e)}
 
 
-
 async def create_request_password(user: User):
-    reset_token = generate_reset_token()
     user_id = await get_user_id(user.username)
-    reset_request = PasswordResetRequest(user_id=user_id, reset_token=reset_token)
-    result = await password_reset_collection.insert_one(reset_request.dict())
-    if not result.inserted_id:
-        raise HTTPException(status_code=500, detail="Failed to save reset request")
-    return reset_token
+    token = jwt.encode(user_id, SECRET_KEY, algorithm=ALGORITHM)
+    return token
 
 @router.post("/send-password-reset/")
 async def send_password_reset(background_tasks: BackgroundTasks, user: User = Depends(get_current_user)):
     try:
-        reset_token = await create_and_save_reset_request(user)
+        reset_token = await create_request_password(user)
         subject = "Password Reset"
-        reset_link = f"https://example.com/reset-password?token={reset_token}"  # Replace with your actual reset link
+        reset_link = f"https://yourwebsite.com/reset-password/{reset_token}"
         html_content = f"""
         <html>
+        <head>
+            <title>Reset Your Password</title>
+        </head>
         <body>
             <h1>Password Reset</h1>
             <p>Hello {user.username},</p>
@@ -102,9 +101,25 @@ async def send_password_reset(background_tasks: BackgroundTasks, user: User = De
         </body>
         </html>
         """
-        send_email(user.email, subject, html_content)
+        try:
+            send_email(user.email, subject, html_content)
+        except Exception as e:
+            print(f"Error sending email: {e}")
         return {"message": "Password reset email sent"}
     except Exception as e:
         print(f"Error: {e}")  # Print the error message
         raise HTTPException(status_code=500, detail="Failed to send password reset email")
-        
+
+@router.post("/password-change/")
+async def send_password_reset(token: str):
+    # Ahora puedes decodificar el token de nuevo en un payload
+    decoded_payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    if not decoded_payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = await get_user(decoded_payload["sub"])
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="Incorrect user"
+        )
+    return {"message": "Ok"}

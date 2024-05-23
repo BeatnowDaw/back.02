@@ -12,6 +12,7 @@ from model.user_shemas import NewUser
 from config.db import users_collection
 import jwt
 
+
 SSH_USERNAME_RES = "beatnowadmin"
 SSH_PASSWORD_RES = "Monlau20212021!"
 SSH_HOST_RES = "172.203.251.28"

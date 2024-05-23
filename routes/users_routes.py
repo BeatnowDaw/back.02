@@ -215,11 +215,13 @@ async def list_user_publications(username: str, current_user: User = Depends(get
     # Buscar todas las publicaciones del usuario
     user_id = str(user_exists["_id"])
     user_publications = post_collection.find({"user_id": user_id})
+    if not user_publications:
+        return []
     results = []
     async for document in user_publications:  # Asynchronous iteration
-            document["_id"] = str(document["_id"])  # Convert ObjectId to string
-            results.append(document)
-            return results
+        document["_id"] = str(document["_id"])  # Convert ObjectId to string
+        results.append(document)
+    return results 
 
 @router.get("/profile/{user_id}", response_model=UserProfile)
 async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
