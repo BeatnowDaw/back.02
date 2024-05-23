@@ -1,6 +1,9 @@
-from typing import Optional
+from typing import Dict, List, Optional
+from xml.dom.minidom import Document
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
+
+from model.post_shemas import PostShowed, ProfilePost
 
 class NewUser(BaseModel):
     full_name: Optional[str] = Field(alias="full_name")
@@ -22,9 +25,9 @@ class UserInDB(User):
 class UserProfile(UserInDB):
     followers: int = Field(alias="followers")
     following: int = Field(alias="following")
-    post_num: int = Field(alias="post")
-    post : list[str] = Field(alias="post")
+    post_num: int = Field(alias="post_num")
     is_following: int = Field(alias="is_following")
+    publications: List[PostShowed] = Field(alias="publications")
 
 class UserInfo(UserInDB):
     followers: Optional[list[str]] = Field(alias="followers")

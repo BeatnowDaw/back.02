@@ -222,15 +222,23 @@ async def get_random_publication(current_user: User = Depends(get_current_user),
 
 @router.get("/{post_id}", response_model=PostShowed)
 async def read_publication(post_id: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    readed_post = await read_post(post_id, current_user)
+    if readed_post is not None:
+        return readed_post
+    else:
+        raise HTTPException(status_code=404, detail="Publication not found")
+
+async def read_post(post_id: str, current_user: User):
     post_dict = await post_collection.find_one({"_id": ObjectId(post_id)})
     if post_dict:
         postindb = Post(**post_dict)
         creator_name = await get_username(post_dict["user_id"])  # Use post_dict instead of post_id
-        post = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(),creator_username=creator_name,isLiked=await has_liked_post(post_id, current_user),
+        post_result = PostShowed(_id=str(ObjectId(post_id)), **postindb.dict(),creator_username=creator_name,isLiked=await has_liked_post(post_id, current_user),
                           isSaved=await has_saved_post(post_id, current_user))
-        return post
+        return post_result
     else:
-        raise HTTPException(status_code=404, detail="Publication not found")
+        return None
+    
 
 
 
@@ -250,21 +258,7 @@ async def delete_publication(post_id: str, current_user: User = Depends(get_curr
     raise HTTPException(status_code=404, detail="Publication not found")
 
 
-@router.get("/user/{username}",response_model=List[PostInDB])
-async def list_user_publications(username: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
-    # Verificar si el usuario solicitado existe
-    user_exists = await users_collection.find_one({"username": username})
-    if not user_exists:
-        raise HTTPException(status_code=404, detail="User not found")
 
-    # Buscar todas las publicaciones del usuario
-    user_id = str(user_exists["_id"])
-    user_publications = post_collection.find({"user_id": user_id})
-    results = []
-    async for document in user_publications:  # Asynchronous iteration
-            document["_id"] = str(document["_id"])  # Convert ObjectId to string
-            results.append(document)
-            return results
 
 async def has_liked_post(post_id: str, current_user: User):
     user_id = await get_user_id(current_user.username)

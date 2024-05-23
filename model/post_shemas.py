@@ -31,9 +31,6 @@ class PostInDB(Post):
         return str(v) if isinstance(v, ObjectId) else v
 
 class PostShowed(PostInDB):
-    likes: int = 0
-    dislikes: int = 0
-    saves: int = 0
     creator_username: Optional[str] = Field(default=None, alias="creator_username")
     isLiked: Optional[bool] = Field(default=False, alias="isLiked")
     isSaved: Optional[bool] = Field(default=False, alias="isSaved")
@@ -46,6 +43,11 @@ class SearchPost(BaseModel):
     key: Optional[str] = None
     tags: Optional[List[str]] = None
     search: Optional[str] = None
+
+class ProfilePost(BaseModel):
+    id: str = Field(alias="_id")
+    title: str = Field(alias="title")
+    description: str = Field(alias="description")
 
 class Tag(BaseModel):
     name: str = Field(alias="name")

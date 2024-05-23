@@ -6,7 +6,7 @@ from bson import ObjectId
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
 from requests import post
-from model.post_shemas import PostShowed
+from model.post_shemas import PostInDB, PostShowed, ProfilePost
 from model.user_shemas import NewUser, User, UserInDB, UserProfile
 from model.lyrics_shemas import Lyrics
 from config.security import  guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
@@ -16,7 +16,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import File, HTTPException, Depends, UploadFile, status, APIRouter
 import paramiko
 from routes.follow_routes import count_followers, count_following
-from routes.posts_routes import list_user_publications
 import pymongo
 
 # Iniciar router
@@ -206,7 +205,21 @@ async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=
     
     return user_lyrics
 
+@router.get("/posts/{username}",response_model=List[PostInDB])
+async def list_user_publications(username: str, current_user: User = Depends(get_current_user), db=Depends(get_database)):
+    # Verificar si el usuario solicitado existe
+    user_exists = await users_collection.find_one({"username": username})
+    if not user_exists:
+        raise HTTPException(status_code=404, detail="User not found")
 
+    # Buscar todas las publicaciones del usuario
+    user_id = str(user_exists["_id"])
+    user_publications = post_collection.find({"user_id": user_id})
+    results = []
+    async for document in user_publications:  # Asynchronous iteration
+            document["_id"] = str(document["_id"])  # Convert ObjectId to string
+            results.append(document)
+            return results
 
 @router.get("/profile/{user_id}", response_model=UserProfile)
 async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
@@ -231,11 +244,7 @@ async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_cur
         post_count = await post_collection.count_documents({"user_id": user_id})
         if post_count==None:
             post_count = 0
-        user_publications = post_collection.find({"user_id": user_id})
-        results = []
-        async for document in user_publications:  # Asynchronous iteration
-            document["_id"] = str(document["_id"])  # Convert ObjectId to string
-            results.append(document)
+        results = await list_user_publications(userindb.username)
 
 
         profile = UserProfile(
@@ -244,10 +253,11 @@ async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_cur
             followers=_followers["followers_count"],
             following=_following["following_count"],
             post_num=post_count,
-            post=results,
-            is_following=isFollowing
+            is_following=isFollowing,
+            publications=results  # Asegúrate de que 'publications' es un campo en tu modelo UserProfile
         )
-        return profile
+
+        return profile.dict()
     else:
         raise HTTPException(status_code=404, detail="User id not Found")
 
