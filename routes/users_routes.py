@@ -40,12 +40,12 @@ async def register(user: NewUser):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
         user_id = await get_user_id( user_dict['username'])
-        username = user_dict['username']
         directory_commands = f"sudo mkdir -p /var/www/html/beatnow/{user_id}/photo_profile /var/www/html/beatnow/{user_id}/posts"
-        delete_photo = f"sudo cp /var/www/html/beatnow/res/default-profile.jpg /var/www/html/beatnow/{user_id}/photo_profile/photo_profile.png"
+        delete_photo = f"sudo cp /var/www/html/res/photo-profile.jpg /var/www/html/beatnow/{user_id}/photo_profile/photo_profile.png"
         stdin, stdout, stderr = ssh.exec_command(directory_commands)
         exit_status = stderr.channel.recv_exit_status()
         if exit_status != 0:
+            await users_collection.delete_one({"_id": ObjectId(result.inserted_id)})
             raise HTTPException(status_code=500, detail="Error creating the folder on the remote server")
         
         stdin, stdout, stderr = ssh.exec_command(delete_photo)
@@ -53,6 +53,7 @@ async def register(user: NewUser):
 
 
         if exit_status != 0:
+            await users_collection.delete_one({"_id": ObjectId(result.inserted_id)})
             raise HTTPException(status_code=500, detail="Error creating the default photo on the remote server")
     return {"_id": str(result.inserted_id)}
 

@@ -726,3 +726,13 @@ Traceback (most recent call last):
   File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pymongo\topology.py", line 259, in _select_servers_loop
     raise ServerSelectionTimeoutError(
 pymongo.errors.ServerSelectionTimeoutError: ac-7zrxalx-shard-00-01.v1mxd4q.mongodb.net:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),ac-7zrxalx-shard-00-00.v1mxd4q.mongodb.net:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),ac-7zrxalx-shard-00-02.v1mxd4q.mongodb.net:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 664e38986dd1f182d608b9d8, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('ac-7zrxalx-shard-00-00.v1mxd4q.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('ac-7zrxalx-shard-00-00.v1mxd4q.mongodb.net:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>, <ServerDescription ('ac-7zrxalx-shard-00-01.v1mxd4q.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('ac-7zrxalx-shard-00-01.v1mxd4q.mongodb.net:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>, <ServerDescription ('ac-7zrxalx-shard-00-02.v1mxd4q.mongodb.net', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('ac-7zrxalx-shard-00-02.v1mxd4q.mongodb.net:27017: [Errno 11001] getaddrinfo failed (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+INFO:root:2024-05-23 17:06:11.493470 - Login failed - Incorrect username: beatnow
+INFO:root:2024-05-23 17:06:17.673656 - Login failed - Incorrect username: beatnow
+INFO:root:2024-05-23 17:06:18.736174 - Login failed - Incorrect username: beatnow
+INFO:root:2024-05-23 17:06:19.720077 - Login failed - Incorrect username: beatnow
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!

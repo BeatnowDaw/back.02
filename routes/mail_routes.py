@@ -76,7 +76,11 @@ async def send_confirmation(background_tasks: BackgroundTasks,user: NewUser = De
 
 
 async def create_request_password(user: User):
-    user_id = await get_user_id(user.username)
+    try:
+        user_id = await get_user_id(user.username)
+    except Exception as e:
+        print(f"Error getting user id: {e}")
+        return None
     token = jwt.encode(user_id, SECRET_KEY, algorithm=ALGORITHM)
     return token
 
