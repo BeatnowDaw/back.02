@@ -10,6 +10,7 @@ class NewUser(BaseModel):
     username: str = Field(alias="username")
     email: Optional[str] = Field(alias="email")
     password: Optional[str] = Field(alias="password")
+    is_active: Optional[bool] = Field(default=False, alias="is_active")
 
 class User(NewUser):
     bio : Optional[str] = Field(default=None, alias="bio")

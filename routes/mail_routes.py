@@ -2,7 +2,7 @@ import bcrypt
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 import jwt
 from config.mail import send_email
-from config.security import ALGORITHM, SECRET_KEY, get_current_user, get_user, get_user_id
+from config.security import ALGORITHM, SECRET_KEY, get_current_user, get_user, get_user_id, get_username
 from model.user_shemas import NewUser, User
 import random
 from config.db import mail_code_collection,users_collection
@@ -29,7 +29,7 @@ async def create_and_save_confirmation_code(user: User):
     return confirmation_code
 
 @router.post("/send-confirmation/")
-async def send_confirmation(background_tasks: BackgroundTasks,user: NewUser = Depends(get_current_user)):
+async def send_confirmation(user: NewUser = Depends(get_current_user)):
     try:
         confirmation_code = await create_and_save_confirmation_code(user)
         subject = "Confirmación de Registro"
@@ -74,53 +74,87 @@ async def send_confirmation(background_tasks: BackgroundTasks,user: NewUser = De
         print(f"Error: {e}")  # Print the error message
     return {"error": str(e)}
 
+async def verify_confirmation_code(user: User, provided_code: str):
+    user_id = await get_user_id(user.username)
+    stored_code = await mail_code_collection.find_one({"user_id": user_id})
+
+    if not stored_code:
+        raise HTTPException(status_code=404, detail="No code found for this user")
+
+    # Compara el hash del código proporcionado con el hash almacenado
+    if bcrypt.checkpw(provided_code.encode('utf-8'), stored_code['code']):
+        return True  
+
+    return False 
+
+@router.post("/confirmation/")
+async def confirmation(code: str, user: NewUser = Depends(get_current_user)):
+    confirmation = await verify_confirmation_code(user, code)
+    if not confirmation:
+        raise HTTPException(status_code=400, detail="Invalid code")
+    else:
+        user_id=await get_user_id(user.username)
+        await mail_code_collection.delete_many({"user_id": user_id})
+        await users_collection.update_one({"_id": user_id}, {"$set": {"is_active": True}})
+    return {"message": "Ok"}
 
 async def create_request_password(user: User):
-    try:
-        user_id = await get_user_id(user.username)
-    except Exception as e:
-        print(f"Error getting user id: {e}")
-        return None
+    user_id = await get_user_id(user.username)
+    # Asegúrate de que user_id es un diccionario antes de codificarlo en un token JWT
+    if not isinstance(user_id, dict):
+        user_id = {'user_id': user_id}
     token = jwt.encode(user_id, SECRET_KEY, algorithm=ALGORITHM)
     return token
 
 @router.post("/send-password-reset/")
-async def send_password_reset(background_tasks: BackgroundTasks, user: User = Depends(get_current_user)):
+async def send_password_reset(user: User = Depends(get_current_user)):
     try:
         reset_token = await create_request_password(user)
         subject = "Password Reset"
-        reset_link = f"https://yourwebsite.com/reset-password/{reset_token}"
+        reset_link = "https://yourwebsite.com/reset-password/{reset_token}"
         html_content = f"""
-        <html>
+        <!DOCTYPE html>
+        <html lang="en">
         <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Reset Your Password</title>
         </head>
-        <body>
-            <h1>Password Reset</h1>
-            <p>Hello {user.username},</p>
-            <p>We received a request to reset your password. If this was you, please click the following link to reset your password:</p>
-            <a href="{reset_link}">Reset Password</a>
-            <p>If you didn't request a password reset, you can safely ignore this email.</p>
-            <p>Thank you!</p>
+        <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5;">
+            <div class="container" style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div class="header">
+                    <img src="http://172.203.251.28/res/logo.png" alt="BeatNow Logo">
+                    <h1>Password Reset</h1>
+                </div>
+                <div class="body">
+                    <p>Hello {user.username},</p>
+                    <p>We received a request to reset your password. If this was you, please click the following link to reset your password:</p>
+                    <a href="{reset_link}">Reset Password</a>
+                    <p>{reset_token}</p>
+                    <p>If you didn't request a password reset, you can safely ignore this email.</p>
+                    <p>Thank you!</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; 2024 BeatNow. All Rights Reserved.</p>
+                </div>
+            </div>
         </body>
         </html>
         """
-        try:
-            send_email(user.email, subject, html_content)
-        except Exception as e:
-            print(f"Error sending email: {e}")
+        send_email(user.email, subject, html_content)
         return {"message": "Password reset email sent"}
     except Exception as e:
         print(f"Error: {e}")  # Print the error message
         raise HTTPException(status_code=500, detail="Failed to send password reset email")
 
 @router.post("/password-change/")
-async def send_password_reset(token: str):
+async def password_change(token: str):
     # Ahora puedes decodificar el token de nuevo en un payload
     decoded_payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     if not decoded_payload:
         raise HTTPException(status_code=401, detail="Invalid token")
-    user = await get_user(decoded_payload["sub"])
+    username = await get_username(decoded_payload['user_id'])
+    user= await get_user(username)
     if not user:
         raise HTTPException(
             status_code=400,

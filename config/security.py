@@ -19,7 +19,7 @@ SSH_HOST_RES = "172.203.251.28"
 
 SECRET_KEY = "tu_super_secreto"  # Cambia esto por una clave generada de forma segura
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Tiempo de expiración del token
+ACCESS_TOKEN_EXPIRE_MINUTES = 8000  # Tiempo de expiración del token
 
 # Configuración de la seguridad y autenticación OAuth2
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -62,6 +62,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Inactive user")
     return user
 
 async def get_user_id(username: str):
