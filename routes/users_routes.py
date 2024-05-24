@@ -275,7 +275,7 @@ async def delete_photo_profile(current_user: NewUser = Depends(get_current_user)
 
     user_id = await get_user_id(current_user.username)
     user_photo_dir = f"/var/www/html/beatnow/{user_id}/photo_profile"
-    default_photo_path = "/var/www/html/beatnow/res/default-profile.jpg"
+    default_photo_path = "/var/www/html/res/photo-profile.jpg"
 
     try:
         # Establish SSH connection and perform the operation
