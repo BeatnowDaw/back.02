@@ -10,7 +10,7 @@ import difflib
 # Iniciar router
 router = APIRouter()
 
-@router.get("/search_posts", response_model=List[PostInDB])
+@router.post("/search_posts", response_model=List[PostInDB])
 async def search_posts(
     genre: Optional[str] = Form(None),
     moods: Optional[str] = Form(None),
@@ -73,7 +73,7 @@ async def search_posts(
 
 
 
-@router.get("/user/", response_model=List[UserInDB])
+@router.post("/user/", response_model=List[UserInDB])
 async def search_user(params: UserSearch = Depends(), current_user: UserInDB = Depends(get_current_user)):
     query = {
         "$and": [
