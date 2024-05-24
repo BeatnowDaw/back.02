@@ -75,7 +75,7 @@ async def send_confirmation(user: NewUser = Depends(get_current_user_without_con
         return {"message": "Correo de confirmación enviado", "codigo": confirmation_code}
     except Exception as e:
         print(f"Error: {e}")  # Print the error message
-    return {"error": str(e)}
+        return {"error": str(e)}
 
 async def verify_confirmation_code(user: User, provided_code: str):
     user_id = await get_user_id(user.username)
