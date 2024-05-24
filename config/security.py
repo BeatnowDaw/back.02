@@ -6,8 +6,9 @@ from jwt import PyJWTError
 from passlib.context import CryptContext
 import logging
 from prometheus_client import Counter
-from config.db import users_collection, post_collection
+from config.db import users_collection, post_collection, lyrics_collection
 from datetime import datetime, timedelta
+from model.lyrics_shemas import Lyrics
 from model.user_shemas import NewUser
 from config.db import users_collection
 import jwt
@@ -82,6 +83,14 @@ async def get_user_id(username: str):
         return str(user["_id"])
     else:
         return "Usuario no encontrado" 
+
+
+async def get_lyric_id(lyric: Lyrics):
+    lyric = await lyrics_collection.find_one({lyric.dict()})
+    if lyric:
+        return str(user["_id"])
+    else:
+        return "Lyric no encontrado" 
 async def get_username(user_id: str):
     user = await users_collection.find_one({"_id": ObjectId(user_id)})
     if user:

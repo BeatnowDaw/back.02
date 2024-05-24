@@ -6,10 +6,10 @@ from bson import ObjectId
 from passlib.handlers.bcrypt import bcrypt
 import bcrypt
 from requests import post
-from model.post_shemas import PostInDB, PostShowed, ProfilePost
+from model.post_shemas import PostInDB
 from model.user_shemas import NewUser, User, UserInDB, UserProfile
-from model.lyrics_shemas import Lyrics
-from config.security import  guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
+from model.lyrics_shemas import Lyrics, LyricsInDB
+from config.security import  get_lyric_id, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
 from config.db import parse_list, users_collection, interactions_collection, get_database, lyrics_collection, follows_collection, post_collection
 from fastapi.security import OAuth2PasswordRequestForm
@@ -195,7 +195,7 @@ async def get_liked_posts(current_user: NewUser = Depends(get_current_user), db=
     
     return {"liked_posts": liked_posts}
 
-@router.get("/lyrics", response_model=List[Lyrics])
+@router.get("/lyrics", response_model=List[LyricsInDB])
 async def get_user_lyrics(current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):
     user_id = await get_user_id(current_user.username)
     user_lyrics = await lyrics_collection.find({"user_id": user_id}).to_list(None)
@@ -366,6 +366,8 @@ async def update_user(user_update: UserInDB, current_user: NewUser = Depends(get
     user = User(**user_update.dict())
     user_dict = user.dict()
     user_dict['password'] = password_hash
+    if not user_dict['is_active']:
+        user_dict['is_active'] = True
     # Encuentra y actualiza el usuario en la base de datos
     result = await users_collection.update_one(
     {"_id": ObjectId(user_update.id)},
