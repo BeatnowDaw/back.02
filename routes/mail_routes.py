@@ -151,7 +151,7 @@ async def send_password_reset(mail: str):
         </html>
         """
         send_email(user.email, subject, html_content)
-        return {"message": "Password reset email sent"}
+        return {"message": "Password reset email sent", "reset_token": reset_token}
     except Exception as e:
         print(f"Error: {e}")  # Print the error message
         raise HTTPException(status_code=500, detail="Failed to send password reset email")
