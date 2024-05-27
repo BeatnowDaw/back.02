@@ -27,7 +27,7 @@ class UserProfile(UserInDB):
     followers: int = Field(alias="followers")
     following: int = Field(alias="following")
     post_num: int = Field(alias="post_num")
-    is_following: int = Field(alias="is_following")
+    is_following: bool = Field(alias="is_following")
     #publications: List[PostShowed] = Field(alias="publications")
 
 class UserInfo(UserInDB):

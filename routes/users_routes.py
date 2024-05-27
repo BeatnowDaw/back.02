@@ -234,13 +234,13 @@ async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_cur
         userindb = User(**user_dict)
         user_id_following = await get_user_id(current_user.username)
         if user_id_following==user_id:
-            isFollowing = 0
+            isFollowing = True
         else:
             existing_follow = await follows_collection.find_one({"user_id_followed": user_id, "user_id_following": user_id_following})
             if existing_follow:
-                isFollowing = 1
+                isFollowing = True
             else:
-                isFollowing = -1
+                isFollowing = False
         _followers = await count_followers(user_id)
         if _followers==None:
             _followers = 0
@@ -251,11 +251,11 @@ async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_cur
         if post_count==None:
             post_count = 0
         #results = await list_user_publications(userindb.username)
-
+        
 
         profile = UserProfile(
             **userindb.dict(),
-            _id=str(ObjectId(user_id)),
+            _id=str(user_id),
             followers=_followers["followers_count"],
             following=_following["following_count"],
             post_num=post_count,
