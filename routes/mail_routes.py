@@ -53,10 +53,10 @@ async def send_confirmation(user: NewUser = Depends(get_current_user_without_con
                     <h1>Verify your email address</h1>
                 </div>
                 <div class="body">
-                    <p>Hola {user.username},</p>
-                    <p>You need to verify your email address to continue using your Twilio account. Enter the following code to verify your email address:</p>
+                    <p>Hello {user.username},</p>
+                    <p>You need to verify your email address to continue using your BeatNow account. Enter the following code to verify your email address:</p>
                     <h2 style="text-align: center;">{confirmation_code}</h2>
-                    <p>In case you were not trying to access your Twilio Account & are seeing this email, please follow the instructions below:</p>
+                    <p>In case you were not trying to access your BeatNow Account & are seeing this email, please follow the instructions below:</p>
                     <ul>
                         <li>Reset your BeatNow password.</li>
                         <li>Check if any changes were made to your account & user settings. If yes, revert them immediately.</li>
