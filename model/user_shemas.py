@@ -28,7 +28,7 @@ class UserProfile(UserInDB):
     following: int = Field(alias="following")
     post_num: int = Field(alias="post_num")
     is_following: int = Field(alias="is_following")
-    publications: List[PostShowed] = Field(alias="publications")
+    #publications: List[PostShowed] = Field(alias="publications")
 
 class UserInfo(UserInDB):
     followers: Optional[list[str]] = Field(alias="followers")

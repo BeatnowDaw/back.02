@@ -9,7 +9,7 @@ from requests import post
 from model.post_shemas import PostInDB
 from model.user_shemas import NewUser, User, UserInDB, UserProfile
 from model.lyrics_shemas import Lyrics, LyricsInDB
-from config.security import  get_lyric_id, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
+from config.security import  get_current_user_without_confirmation, get_lyric_id, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
 from config.db import parse_list, users_collection, interactions_collection, get_database, lyrics_collection, follows_collection, post_collection
 from fastapi.security import OAuth2PasswordRequestForm
@@ -122,7 +122,7 @@ async def delete_user(current_user: NewUser = Depends(get_current_user), db=Depe
 # Recoger datos del usuario actual
 @router.get("/users/me")
 async def read_users_me(
-    current_user: Annotated[NewUser, Depends(get_current_user)],
+    current_user: Annotated[NewUser, Depends(get_current_user_without_confirmation)],
 ):
     user_id= await get_user_id(current_user.username)
     return {**current_user.dict(), "id": str(user_id)}

@@ -1065,3 +1065,5 @@ Traceback (most recent call last):
   File "C:\Users\martimasxax\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pymongo\pool.py", line 411, in _raise_connection_failure
     raise AutoReconnect(msg) from error
 pymongo.errors.AutoReconnect: ac-7zrxalx-shard-00-01.v1mxd4q.mongodb.net:27017: (10053, 'WSAECONNABORTED') (configured timeouts: connectTimeoutMS: 20000.0ms)
+INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
+INFO:paramiko.transport:Authentication (password) successful!
