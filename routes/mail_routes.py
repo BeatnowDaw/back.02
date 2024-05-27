@@ -114,6 +114,7 @@ async def create_request_password(user: User):
 
 @router.post("/send-password-reset/")
 async def send_password_reset(mail: str):
+    mail = mail.replace("%40", "@")
     try:
         user_find = await users_collection.find_one({"email": mail})
         if not user_find:
