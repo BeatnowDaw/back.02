@@ -1,7 +1,9 @@
+import email
 import bcrypt
 from bson import ObjectId
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 import jwt
+from pydantic import EmailStr
 from config.mail import send_email
 from config.security import ALGORITHM, SECRET_KEY, get_current_user, get_current_user_without_confirmation, get_user, get_user_id, get_username
 from model.user_shemas import NewUser, User
@@ -74,7 +76,7 @@ async def send_confirmation(user: NewUser = Depends(get_current_user_without_con
         send_email(user.email, subject, html_content)
         return {"message": "Correo de confirmación enviado", "codigo": confirmation_code}
     except Exception as e:
-        print(f"Error: {e}")  # Print the error message
+        print(f"Error: {e}")  
         return {"error": str(e)}
 
 async def verify_confirmation_code(user: User, provided_code: str):
@@ -105,14 +107,13 @@ async def confirmation(code: str, user: NewUser = Depends(get_current_user_witho
 
 async def create_request_password(user: User):
     user_id = await get_user_id(user.username)
-    # Asegúrate de que user_id es un diccionario antes de codificarlo en un token JWT
     if not isinstance(user_id, dict):
         user_id = {'user_id': user_id}
     token = jwt.encode(user_id, SECRET_KEY, algorithm=ALGORITHM)
     return token
 
 @router.post("/send-password-reset/")
-async def send_password_reset(mail: str):
+async def send_password_reset(mail: EmailStr):
     try:
         user_find = await users_collection.find_one({"email": mail})
         if not user_find:
