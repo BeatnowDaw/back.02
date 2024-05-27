@@ -9,7 +9,7 @@ from requests import post
 from model.post_shemas import PostInDB
 from model.user_shemas import NewUser, User, UserInDB, UserProfile
 from model.lyrics_shemas import Lyrics, LyricsInDB
-from config.security import  get_current_user_without_confirmation, get_lyric_id, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
+from config.security import  get_current_user_without_confirmation, get_lyric_id, get_user, get_username, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
 from config.db import parse_list, users_collection, interactions_collection, get_database, lyrics_collection, follows_collection, post_collection
 from fastapi.security import OAuth2PasswordRequestForm
@@ -17,6 +17,8 @@ from fastapi import File, HTTPException, Depends, UploadFile, status, APIRouter
 import paramiko
 from routes.follow_routes import count_followers, count_following
 import pymongo
+
+from routes.mail_routes import send_confirmation
 
 # Iniciar router
 router = APIRouter()
@@ -55,6 +57,7 @@ async def register(user: NewUser):
         if exit_status != 0:
             await users_collection.delete_one({"_id": ObjectId(result.inserted_id)})
             raise HTTPException(status_code=500, detail="Error creating the default photo on the remote server")
+        await send_confirmation(await get_user(await get_username(result.inserted_id)))
     return {"_id": str(result.inserted_id)}
 
 @router.delete("/delete")
@@ -247,7 +250,7 @@ async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_cur
         post_count = await post_collection.count_documents({"user_id": user_id})
         if post_count==None:
             post_count = 0
-        results = await list_user_publications(userindb.username)
+        #results = await list_user_publications(userindb.username)
 
 
         profile = UserProfile(
@@ -257,7 +260,7 @@ async def get_user_profile(user_id: str, current_user: NewUser = Depends(get_cur
             following=_following["following_count"],
             post_num=post_count,
             is_following=isFollowing,
-            publications=results  # Asegúrate de que 'publications' es un campo en tu modelo UserProfile
+            #publications=results  # Asegúrate de que 'publications' es un campo en tu modelo UserProfile
         )
 
         return profile.dict()
