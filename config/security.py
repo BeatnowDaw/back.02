@@ -18,7 +18,7 @@ SSH_USERNAME_RES = "beatnowadmin"
 SSH_PASSWORD_RES = "Monlau20212021!"
 SSH_HOST_RES = "172.203.251.28"
 
-SECRET_KEY = "tu_super_secreto"  # Cambia esto por una clave generada de forma segura
+SECRET_KEY = "tu_super_secreto" 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 8000  # Tiempo de expiración del token
 
@@ -83,7 +83,12 @@ async def get_user_id(username: str):
         return str(user["_id"])
     else:
         return "Usuario no encontrado" 
-
+async def get_post_id_saved(_id: str):
+    lyric = await post_collection.find_one({"_id": ObjectId(_id)})
+    if lyric:
+        return str(lyric["user_id"])
+    else:
+        return "Lyric no encontrado" 
 
 async def get_lyric_id(lyric: Lyrics):
     lyric = await lyrics_collection.find_one({lyric.dict()})
@@ -91,6 +96,7 @@ async def get_lyric_id(lyric: Lyrics):
         return str(user["_id"])
     else:
         return "Lyric no encontrado" 
+    
 async def get_username(user_id: str):
     user = await users_collection.find_one({"_id": ObjectId(user_id)})
     if user:

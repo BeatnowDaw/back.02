@@ -9,7 +9,7 @@ from requests import post
 from model.post_shemas import PostInDB
 from model.user_shemas import NewUser, User, UserInDB, UserProfile
 from model.lyrics_shemas import Lyrics, LyricsInDB
-from config.security import  get_current_user_without_confirmation, get_lyric_id, get_user, get_username, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
+from config.security import  get_current_user_without_confirmation, get_lyric_id, get_post_id_saved, get_user, get_username, guardar_log, SSH_USERNAME_RES, SSH_PASSWORD_RES, SSH_HOST_RES, \
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user_id
 from config.db import parse_list, users_collection, interactions_collection, get_database, lyrics_collection, follows_collection, post_collection
 from fastapi.security import OAuth2PasswordRequestForm
@@ -183,6 +183,7 @@ async def get_saved_posts(current_user: NewUser = Depends(get_current_user), db=
     # Convertir ObjectId a cadenas
     for post in saved_posts:
         post["_id"] = str(post["_id"])
+        post["creator_id"] = await get_post_id_saved(post["post_id"])
     
     return {"saved_posts": saved_posts}
 
