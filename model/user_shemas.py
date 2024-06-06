@@ -3,7 +3,6 @@ from xml.dom.minidom import Document
 from bson import ObjectId
 from pydantic import BaseModel, Field, validator
 
-from model.post_shemas import PostShowed, ProfilePost
 
 class NewUser(BaseModel):
     full_name: Optional[str] = Field(alias="full_name")

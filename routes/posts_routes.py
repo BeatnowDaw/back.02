@@ -44,11 +44,11 @@ async def upload_post(
         bpm=bpm,
     )
     # Validar el tipo de archivo antes de continuar
-    allowed_image_extensions = {".jpg", ".jpeg"}
+    allowed_image_extensions = {".jpg", ".jpeg",".gif"}
     allowed_audio_extensions = {".wav", ".mp3"}
 
     if not cover_file.filename.lower().endswith(tuple(allowed_image_extensions)):
-        raise HTTPException(status_code=415, detail="Only JPG/JPEG files are allowed for images.")
+        raise HTTPException(status_code=415, detail="Only JPG/JPEG or GIF files are allowed for images.")
 
     if audio_file:
         if not audio_file.filename.lower().endswith(tuple(allowed_audio_extensions)):
@@ -56,11 +56,16 @@ async def upload_post(
     user_id=await get_user_id(current_user.username)
     if not user_id:
         raise HTTPException(status_code=404, detail="User not found")
-    file_extension = audio_file.filename.split(".")[-1]
-    if file_extension  in ["mp3"]:
+    audio_file_extension = audio_file.filename.split(".")[-1]
+    if audio_file_extension  in ["mp3"]:
         audio_format="mp3"
     else:
         audio_format="wav"
+    cover_file_extension = cover_file.filename.split(".")[-1]
+    if cover_file_extension  in ["jpg","jpeg"]:
+        cover_format="jpg"
+    else:
+        cover_format="gif"
     # Crear el post en la base de datos
     result = None
     try:
@@ -68,6 +73,7 @@ async def upload_post(
             user_id=str(ObjectId(user_id)),
             publication_date=datetime.now(),
             audio_format=audio_format,
+            cover_format=cover_format,
             likes=0,
             saves=0,
             **new_post.dict()
@@ -86,16 +92,19 @@ async def upload_post(
 
             # Verificar si el directorio del usuario existe, si no, crearlo
             if not ssh.exec_command(f"test -d {post_dir}")[1].read():
+                
                 # Crear directorios en el servidor remoto
                 ssh.exec_command(f"sudo mkdir -p {post_dir}")
                 ssh.exec_command(f"sudo chown -R $USER:$USER {post_dir}")
-
-            # Guardar la nueva foto de perfil con un nombre único y formato jpg
-            file_path = os.path.join(post_dir, "caratula.jpg")
-            with ssh.open_sftp().file(file_path, "wb") as buffer:
-                shutil.copyfileobj(cover_file.file, buffer)
+            if cover_file:
+                if cover_format in ["jpg","jpeg"]:
+                    cover_file_path = os.path.join(post_dir, "caratula.jpg")
+                else:
+                    cover_file_path = os.path.join(post_dir, "caratula.gif")
+                with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
+                    shutil.copyfileobj(cover_file.file, buffer)
             if audio_file:
-                if file_extension  in ["mp3"]:
+                if audio_file_extension  in ["mp3"]:
                     audio_file_path = os.path.join(post_dir, "audio.mp3")
                 else:
                     audio_file_path = os.path.join(post_dir, "audio.wav")
@@ -139,7 +148,14 @@ async def update_post(
         raise HTTPException(status_code=404, detail="Post not found")
     creator_id = post["user_id"]
     publication_date = post["publication_date"]
-    
+
+    if not cover_file.filename.lower().endswith(tuple(allowed_image_extensions)):
+        raise HTTPException(status_code=415, detail="Only JPG/JPEG or GIF files are allowed for images.")
+    cover_file_extension = cover_file.filename.split(".")[-1]
+    if cover_file_extension  in ["jpg","jpeg"]:
+        cover_format="jpg"
+    else:
+        cover_format="gif"
     if audio_file:
         file_extension = audio_file.filename.split(".")[-1]
         if file_extension  in ["mp3"]:
@@ -159,6 +175,7 @@ async def update_post(
         user_id=creator_id,
         publication_date=publication_date,
         audio_format=audio_format,
+        cover_format=cover_format,
         likes=await count_likes(post_id),
         saves=await count_saved(post_id),
         _id=post_id
@@ -186,7 +203,10 @@ async def update_post(
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
                 if cover_file:
-                    cover_file_path = os.path.join(post_dir, "caratula.jpg")
+                    if cover_format in ["jpg","jpeg"]:
+                        cover_file_path = os.path.join(post_dir, "caratula.jpg")
+                    else:
+                        cover_file_path = os.path.join(post_dir, "caratula.gif")
                     with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
                         shutil.copyfileobj(cover_file.file, buffer)
                 if audio_file:
