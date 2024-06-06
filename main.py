@@ -11,6 +11,7 @@ from routes.routes import router as routes_router
 from routes.search_routes import router as search_router
 from routes.filter_routes import router as filter_router
 from routes.mail_routes import router as mail_router
+from routes.download_routes import router as donwload_router
 from prometheus_client import start_http_server
 import uvicorn
 from config.db import handle_database_error
@@ -37,6 +38,7 @@ app.include_router(follow_router, prefix="/v1/api/follows")
 app.include_router(search_router, prefix="/v1/api/search")
 app.include_router(filter_router, prefix="/v1/api/filter")
 app.include_router(mail_router, prefix="/v1/api/mail")
+app.include_router(donwload_router, prefix="/v1/api/downloads")
 app.include_router(routes_router)
 # Manejador de excepciones global para errores de base de datos
 app.add_exception_handler(PyMongoError, handle_database_error)

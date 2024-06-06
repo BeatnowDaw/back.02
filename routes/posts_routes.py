@@ -9,7 +9,7 @@ from model.post_shemas import Post, PostInDB, PostShowed, NewPost
 from config.db import get_database, parse_list, post_collection, users_collection, interactions_collection, lyrics_collection
 from config.security import get_current_user, get_user_id, get_username
 from model.user_shemas import NewUser, User
-from routes.interactions_routes import count_likes, count_dislikes, count_saved
+from routes.interactions_routes import count_likes, count_saved
 from fastapi import File, UploadFile, HTTPException
 import os
 import shutil

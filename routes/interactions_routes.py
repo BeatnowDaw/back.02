@@ -126,7 +126,7 @@ async def count_saved(post_id: str, db=Depends(get_database)):
         print(f"Error al contar los saves: {e}")
         return 0
 
-# Contar el número de dislikes de una publicación
+'''# Contar el número de dislikes de una publicación
 #@router.get("/count/dislikes/{post_id}")
 async def count_dislikes(post_id: str, db=Depends(get_database)):
     try:
@@ -134,7 +134,7 @@ async def count_dislikes(post_id: str, db=Depends(get_database)):
         return  dislikes_count
     except Exception as e:
         print(f"Error al contar los saves: {e}")
-        return 0
+        return 0'''
 '''
 @router.get("/protected-route")
 async def protected_route(current_user: NewUser = Security(decode_token, scopes=["base"])):
