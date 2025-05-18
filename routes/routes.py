@@ -1,36 +1,34 @@
 from datetime import timedelta
-from typing import List, Optional
-from passlib.handlers.bcrypt import bcrypt
-import bcrypt
-from model.user_shemas import NewUser
-from config.security import guardar_log, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_user
-from config.db import users_collection, post_collection
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import HTTPException, Depends, APIRouter, Query
+import bcrypt
 
-# Iniciar router
-router = APIRouter()
+from config.db import users_collection
+from config.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, guardar_log
 
-# Login
+router = APIRouter(prefix="/v1/api", tags=["Auth"])
+
 @router.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user_dict = await users_collection.find_one({"username": form_data.username})
-    if not user_dict:
-        guardar_log("Login failed - Incorrect username: " + form_data.username)
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends()
+):
+    # Buscar usuario en BD
+    user_doc = await users_collection.find_one({"username": form_data.username})
+    if not user_doc:
+        guardar_log(f"Login failed - Incorrect username: {form_data.username}")
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-    user = NewUser(**user_dict)
-    if not bcrypt.checkpw(form_data.password.encode('utf-8'), user_dict['password']):
-        guardar_log("Login failed - Incorrect password for username: " + form_data.username)
+    # Verificar contraseña
+    stored_hash = user_doc.get('password')
+    if not bcrypt.checkpw(form_data.password.encode('utf-8'), stored_hash):
+        guardar_log(f"Login failed - Incorrect password for username: {form_data.username}")
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-    if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="Incorrect username or password"
-        )
+
+    # Generar token JWT
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": user.username}
-                                       , expires_delta=access_token_expires
+    access_token = create_access_token(
+        data={"sub": form_data.username},
+        expires_delta=access_token_expires
     )
+    guardar_log(f"Login successful for username: {form_data.username}")
     return {"access_token": access_token, "token_type": "bearer"}
-

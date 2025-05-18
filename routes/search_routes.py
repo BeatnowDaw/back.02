@@ -8,7 +8,7 @@ from Levenshtein import distance as levenshtein_distance
 import difflib
 
 # Iniciar router
-router = APIRouter()
+router = APIRouter(prefix="/v1/api/search", tags=["Search_Posts"])
 
 @router.get("/search_posts", response_model=List[PostInDB])
 async def search_posts(

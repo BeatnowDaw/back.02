@@ -15,7 +15,7 @@ import os
 import shutil
 from datetime import datetime
 
-router = APIRouter()
+router = APIRouter(prefix="/v1/api/posts", tags=["Posts"])
 
 @router.post("/upload", response_model=PostInDB)
 async def upload_post(

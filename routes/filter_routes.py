@@ -6,7 +6,7 @@ from model.user_shemas import User
 
 
 # Iniciar router
-router = APIRouter()
+router = APIRouter(prefix="/v1/api/filter", tags=["Filters"])
 
 @router.get("/genres")
 async def list_genres(current_user: User = Depends(get_current_user), db=Depends(get_database)):

@@ -12,7 +12,7 @@ from config.db import mail_code_collection,users_collection
 from model.shemas import Mail_Code
 
 
-router = APIRouter()
+router = APIRouter(prefix="/v1/api/mail", tags=["Mails"])
 
 def generate_six_digit_number():
     number = random.randrange(0, 999999)

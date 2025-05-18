@@ -8,7 +8,7 @@ from pymongo.errors import PyMongoError
 from bson import ObjectId
 from config.db import get_database, lyrics_collection
 
-router = APIRouter()
+router = APIRouter(prefix="/v1/api/lyrics", tags=["Lyrics"])
 
 # Obtener todas las letras del usuario actual
 @router.get("/user", response_model=List[Lyrics])

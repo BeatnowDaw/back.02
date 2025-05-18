@@ -6,7 +6,7 @@ import requests  # Importación correcta
 from config.security import SSH_HOST_RES, SSH_PASSWORD_RES, SSH_USERNAME_RES
 
 # Iniciar router
-router = APIRouter()
+router = APIRouter(prefix="/v1/api/download", tags=["Downloads"])
 
 APK_DIRECTORY= "/res/android/"
 

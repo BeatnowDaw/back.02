@@ -1,4 +1,6 @@
 # created by virtualenv automatically
 .venv
 .idea
-
+# Python byte-code caches
+__pycache__/
+*.py[cod]

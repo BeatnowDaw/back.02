@@ -7,7 +7,7 @@ from model.user_shemas import NewUser
 from config.db import follows_collection, get_database, follows_collection
 from config.security import get_current_user, get_user_id
 
-router = APIRouter()
+router = APIRouter(prefix="/v1/api/follow", tags=["Follows"])
 
 @router.post("/follow/{user_id}", response_model=Follow, status_code=status.HTTP_201_CREATED)
 async def create_follow(user_id: str, current_user: NewUser = Depends(get_current_user), db=Depends(get_database)):

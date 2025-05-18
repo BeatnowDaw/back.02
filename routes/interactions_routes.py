@@ -5,7 +5,7 @@ from config.security import get_current_user, get_user_id, check_post_exists, de
 from model.user_shemas import NewUser
 
 # Iniciar router
-router = APIRouter()
+router = APIRouter(prefix="/v1/api/interactions", tags=["Interactions"])
 
 # Función para verificar si una interacción ya existe para un usuario en una publicación
 async def check_interaction_exists(user_id: str, post_id: str, interaction_type: str, db):
@@ -115,7 +115,6 @@ async def count_likes(post_id: str, db=Depends(get_database)):
         print(f"Error al contar los saves: {e}")
         return 0
 
-
 # Contar el número de publicaciones guardadas
 #@router.get("/count/saved/{post_id}")
 async def count_saved(post_id: str, db=Depends(get_database)):
@@ -125,6 +124,7 @@ async def count_saved(post_id: str, db=Depends(get_database)):
     except Exception as e:
         print(f"Error al contar los saves: {e}")
         return 0
+
 
 '''# Contar el número de dislikes de una publicación
 #@router.get("/count/dislikes/{post_id}")
