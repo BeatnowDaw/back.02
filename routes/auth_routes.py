@@ -31,7 +31,7 @@ def _sync_provision(user_id: str, username: str):
         ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
         # Crear carpetas y copiar foto default
         ssh.exec_command(f"sudo mkdir -p /var/www/html/beatnow/{user_id}/photo_profile /var/www/html/beatnow/{user_id}/posts")
-        ssh.exec_command(f"sudo cp /var/www/html/res/photo-profile.jpg /var/www/html/beatnow/{user_id}/photo_profile/photo_profile.png")
+        ssh.exec_command(f"sudo cp /var/www/html/beatnow/res/photo-profile.jpg /var/www/html/beatnow/{user_id}/photo_profile/photo_profile.png")
     # Enviar email de confirmación
     send_confirmation(username)
 

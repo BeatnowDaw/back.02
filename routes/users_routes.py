@@ -46,8 +46,8 @@ def _sync_provision_user(user_id: str, username: str) -> None:
     with paramiko.SSHClient() as ssh:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-        mkdir_cmd = f"sudo mkdir -p /var/www/html/beatnow/{user_id}/photo_profile /var/www/html/beatnow/{user_id}/posts"
-        photo_cmd = f"sudo cp /var/www/html/res/photo-profile.jpg /var/www/html/beatnow/{user_id}/photo_profile/photo_profile.png"
+        mkdir_cmd = f"sudo mkdir -p /var/www/beatnow/{user_id}/photo_profile /var/www/beatnow/{user_id}/posts"
+        photo_cmd = f"sudo cp /var/www/beatnow/res/photo-profile.jpg /var/www/beatnow/{user_id}/photo_profile/photo_profile.png"
         ssh.exec_command(mkdir_cmd)
         ssh.exec_command(photo_cmd)
     send_confirmation(username)
@@ -136,37 +136,41 @@ async def update_user(
 # --- Current User Info ---
 @router.get("/me", response_model=UserProfile)
 async def read_users_me(
-    current_user: Annotated[NewUser, Depends(get_current_user_without_confirmation)],
+    current_user_data: Annotated[NewUser, Depends(get_current_user_without_confirmation)],
 ):
-    # 1) get the raw user data
-    uid = await get_user_id(current_user.username)
+    # Buscar el usuario completo en la base de datos
+    user = await users_collection.find_one({"username": current_user_data.username})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    # 2) count followers / following
+    user_id = str(user["_id"])
+
+    # Contar seguidores y seguidos
     from routes.follow_routes import count_followers, count_following
-    followers_data = await count_followers(str(uid))
-    following_data = await count_following(str(uid))
+    followers_data = await count_followers(user_id)
+    following_data = await count_following(user_id)
+
     followers = followers_data.get("followers_count", 0) if isinstance(followers_data, dict) else 0
     following = following_data.get("following_count", 0) if isinstance(following_data, dict) else 0
 
-    # 3) count how many posts the user has
-    post_num = await post_collection.count_documents({"user_id": str(uid)})
+    # Contar publicaciones
+    post_num = await post_collection.count_documents({"user_id": user_id})
 
-    # 4) since this is “/me” they’re always following themselves
-    is_following = True
-
-    # 5) build and return the full profile
+    # Retornar perfil
     return UserProfile(
-        full_name=current_user.full_name,
-        username=current_user.username,
-        email=current_user.email,
-        password=current_user.password,
-        is_active=current_user.is_active,
-        id=str(uid),
+        id=user_id,
+        full_name=user.get("full_name"),
+        username=user.get("username"),
+        email=user.get("email"),
+        password=user.get("password"),
+        is_active=user.get("is_active", False),
+        bio=user.get("bio"),
         followers=followers,
         following=following,
         post_num=post_num,
-        is_following=is_following,
+        is_following=True
     )
+
 # --- Saved & Liked Posts ---
 @router.get("/saved-posts")
 async def get_saved_posts(

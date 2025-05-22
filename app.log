@@ -1548,3 +1548,18 @@ INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
 INFO:paramiko.transport:Connected (version 2.0, client OpenSSH_8.2p1)
 INFO:paramiko.transport:Authentication (password) successful!
+ERROR:fastapi:Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+INFO:root:2025-05-19 19:54:15.401649 - Login failed for aa
+INFO:root:2025-05-19 19:55:09.541047 - Login successful for username: garcoa
+INFO:root:2025-05-19 20:02:37.541978 - Login failed for aa
+INFO:root:2025-05-19 20:02:44.292897 - Login failed for aa
+INFO:root:2025-05-19 20:03:04.640114 - Login failed for hugo12345
+INFO:root:2025-05-19 20:05:23.126394 - Login failed for hugogarsan
+INFO:root:2025-05-19 20:05:27.657303 - Login failed for hugogarsan
+INFO:root:2025-05-19 20:05:28.208231 - Login failed for hugogarsan
+INFO:root:2025-05-19 20:05:58.674482 - Login successful for username: hugogarsan1
+INFO:root:2025-05-19 20:07:11.246290 - Login successful for hugogarsan1
