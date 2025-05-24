@@ -85,6 +85,24 @@ async def upload_post(
         post_id = str(result.inserted_id)
         post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
 
+        # Guarda en local SIEMPRE cuando estés en desarrollo
+        if os.getenv("DEV_MODE", "false").lower() == "true":
+            local_base = "/var/www/html/beatnow"
+            local_user_dir = os.path.join(local_base, str(user_id), "posts", post_id)
+            os.makedirs(local_user_dir, exist_ok=True)
+
+            # Escribe la portada
+            local_cover = os.path.join(local_user_dir, f"caratula.{cover_format}")
+            with open(local_cover, "wb") as f:
+                shutil.copyfileobj(cover_file.file, f)
+
+            # Escribe el audio
+            audio_filename = "audio.mp3" if audio_file_extension == "mp3" else "audio.wav"
+            local_audio = os.path.join(local_user_dir, audio_filename)
+            with open(local_audio, "wb") as f:
+                shutil.copyfileobj(audio_file.file, f)    
+
+
         # Configuración de SSH
         with paramiko.SSHClient() as ssh:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

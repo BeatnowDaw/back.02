@@ -1,5 +1,6 @@
 import asyncio
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from pymongo.errors import PyMongoError
 from config.changeStream import watch_changes
 from routes.users_routes import router as users_router
@@ -17,6 +18,7 @@ from prometheus_client import start_http_server
 import uvicorn
 from config.db import handle_database_error
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 # Iniciar la aplicación
 app = FastAPI()
@@ -28,6 +30,17 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+
+beatnow_dir = "/var/www/html/beatnow"
+os.makedirs(beatnow_dir, exist_ok=True)
+
+# Montaje de estáticos para /beatnow
+app.mount(
+    "/beatnow",
+    StaticFiles(directory="/var/www/html/beatnow"),
+    name="beatnow",
 )
 
 # Incluir los routers
