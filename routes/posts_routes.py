@@ -44,11 +44,14 @@ async def upload_post(
         bpm=bpm,
     )
     # Validar el tipo de archivo antes de continuar
-    allowed_image_extensions = {".jpg", ".jpeg",".gif"}
+    allowed_image_extensions = {".jpg", ".jpeg", ".png", ".gif"}
     allowed_audio_extensions = {".wav", ".mp3"}
 
     if not cover_file.filename.lower().endswith(tuple(allowed_image_extensions)):
-        raise HTTPException(status_code=415, detail="Only JPG/JPEG or GIF files are allowed for images.")
+        raise HTTPException(
+            status_code=415,
+            detail="Only JPG/JPEG, PNG or GIF files are allowed for images."
+        )
 
     if audio_file:
         if not audio_file.filename.lower().endswith(tuple(allowed_audio_extensions)):
@@ -61,11 +64,8 @@ async def upload_post(
         audio_format="mp3"
     else:
         audio_format="wav"
-    cover_file_extension = cover_file.filename.split(".")[-1]
-    if cover_file_extension  in ["jpg","jpeg"]:
-        cover_format="jpg"
-    else:
-        cover_format="gif"
+    cover_file_extension = cover_file.filename.rsplit(".", 1)[-1].lower()
+    cover_format = cover_file_extension  # será 'jpg', 'jpeg', 'png' o 'gif'
     # Crear el post en la base de datos
     result = None
     try:
@@ -97,12 +97,11 @@ async def upload_post(
                 ssh.exec_command(f"sudo mkdir -p {post_dir}")
                 ssh.exec_command(f"sudo chown -R $USER:$USER {post_dir}")
             if cover_file:
-                if cover_format in ["jpg","jpeg"]:
-                    cover_file_path = os.path.join(post_dir, "caratula.jpg")
-                else:
-                    cover_file_path = os.path.join(post_dir, "caratula.gif")
+                cover_filename = f"caratula.{cover_format}"
+                cover_file_path = os.path.join(post_dir, cover_filename)
                 with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
                     shutil.copyfileobj(cover_file.file, buffer)
+
             if audio_file:
                 if audio_file_extension  in ["mp3"]:
                     audio_file_path = os.path.join(post_dir, "audio.mp3")
@@ -202,20 +201,30 @@ async def update_post(
             with paramiko.SSHClient() as ssh:
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-                if cover_file:
-                    if cover_format in ["jpg","jpeg"]:
-                        cover_file_path = os.path.join(post_dir, "caratula.jpg")
-                    else:
-                        cover_file_path = os.path.join(post_dir, "caratula.gif")
-                    with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
-                        shutil.copyfileobj(cover_file.file, buffer)
-                if audio_file:
-                    if file_extension  in ["mp3"]:
-                        audio_file_path = os.path.join(post_dir, "audio.mp3")
-                    else:
-                        audio_file_path = os.path.join(post_dir, "audio.wav")
-                    with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
-                        shutil.copyfileobj(audio_file.file, buffer)
+                sftp = ssh.open_sftp()
+
+                # Crea recursivamente cada subdirectorio de post_dir
+                path_parts = post_dir.strip("/").split("/")
+                accum = ""
+                for part in path_parts:
+                    accum += f"/{part}"
+                    try:
+                        sftp.stat(accum)
+                    except IOError:
+                        sftp.mkdir(accum)
+
+                # Sube la imagen de portada
+                cover_remote = f"{post_dir.rstrip('/')}/caratula.{cover_format}"
+                with sftp.file(cover_remote, "wb") as remote_f:
+                    shutil.copyfileobj(cover_file.file, remote_f)
+
+                # Sube el audio
+                audio_name = "audio.mp3" if audio_file_extension == "mp3" else "audio.wav"
+                audio_remote = f"{post_dir.rstrip('/')}/{audio_name}"
+                with sftp.file(audio_remote, "wb") as remote_f:
+                    shutil.copyfileobj(audio_file.file, remote_f)
+
+            sftp.close()
     except paramiko.SSHException as e:
         raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
 
