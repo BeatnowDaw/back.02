@@ -17,23 +17,26 @@ from datetime import datetime
 
 router = APIRouter(prefix="/v1/api/posts", tags=["Posts"])
 
+# Leer DEV_MODE desde variables de entorno
+DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
+
 @router.post("/upload", response_model=PostInDB)
 async def upload_post(
     cover_file: UploadFile = File(...),
     audio_file: UploadFile = File(...),
     title: str = Form(...),
-    description: Optional[str] = Form(...),
-    genre: Optional[str] = Form(...),
-    tags: Optional[str] = Form(...),
-    moods: Optional[str] = Form(...),
-    instruments: Optional[str] = Form(...),
-    bpm: Optional[int] = Form(...),
-    current_user: NewUser = Depends(get_current_user)
+    description: Optional[str] = Form(None),
+    genre: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
+    moods: Optional[str] = Form(None),
+    instruments: Optional[str] = Form(None),
+    bpm: Optional[int] = Form(None),
+    current_user: NewUser = Depends(get_current_user),
 ):
-    # Convertir strings de listas a listas de Python
     tags_list = parse_list(tags)
     moods_list = parse_list(moods)
     instruments_list = parse_list(instruments)
+
     new_post = NewPost(
         title=title,
         description=description,
@@ -43,103 +46,82 @@ async def upload_post(
         instruments=instruments_list,
         bpm=bpm,
     )
-    # Validar el tipo de archivo antes de continuar
-    allowed_image_extensions = {".jpg", ".jpeg", ".png", ".gif"}
-    allowed_audio_extensions = {".wav", ".mp3"}
 
-    if not cover_file.filename.lower().endswith(tuple(allowed_image_extensions)):
-        raise HTTPException(
-            status_code=415,
-            detail="Only JPG/JPEG, PNG or GIF files are allowed for images."
-        )
+    allowed_image_ext = {".jpg", ".jpeg", ".png", ".gif"}
+    allowed_audio_ext = {".wav", ".mp3"}
 
-    if audio_file:
-        if not audio_file.filename.lower().endswith(tuple(allowed_audio_extensions)):
-            raise HTTPException(status_code=415, detail="Only MP3/WAV files are allowed for audio.")
-    user_id=await get_user_id(current_user.username)
+    if not cover_file.filename.lower().endswith(tuple(allowed_image_ext)):
+        raise HTTPException(415, "Only JPG/JPEG, PNG or GIF files are allowed for images.")
+
+    if not audio_file.filename.lower().endswith(tuple(allowed_audio_ext)):
+        raise HTTPException(415, "Only MP3/WAV files are allowed for audio.")
+
+    user_id = await get_user_id(current_user.username)
     if not user_id:
-        raise HTTPException(status_code=404, detail="User not found")
-    audio_file_extension = audio_file.filename.split(".")[-1]
-    if audio_file_extension  in ["mp3"]:
-        audio_format="mp3"
-    else:
-        audio_format="wav"
-    cover_file_extension = cover_file.filename.rsplit(".", 1)[-1].lower()
-    cover_format = cover_file_extension  # será 'jpg', 'jpeg', 'png' o 'gif'
-    # Crear el post en la base de datos
-    result = None
+        raise HTTPException(404, "User not found")
+
+    audio_ext = audio_file.filename.rsplit(".", 1)[-1].lower()
+    audio_format = "mp3" if audio_ext == "mp3" else "wav"
+    cover_format = cover_file.filename.rsplit(".", 1)[-1].lower()
+
+    post = Post(
+        user_id=str(ObjectId(user_id)),
+        publication_date=datetime.now(),
+        audio_format=audio_format,
+        cover_format=cover_format,
+        likes=0,
+        saves=0,
+        **new_post.dict(),
+    )
+    result = await post_collection.insert_one(post.dict())
+    if not result.inserted_id:
+        raise HTTPException(500, "Failed to create publication")
+    post_id = str(result.inserted_id)
+
+    post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
+
     try:
-        post = Post(
-            user_id=str(ObjectId(user_id)),
-            publication_date=datetime.now(),
-            audio_format=audio_format,
-            cover_format=cover_format,
-            likes=0,
-            saves=0,
-            **new_post.dict()
-        )
-        result = await post_collection.insert_one(post.dict())
-        if not result.inserted_id:
-            raise HTTPException(status_code=500, detail="Failed to create publication")
+        if DEV_MODE:
+            os.makedirs(post_dir, exist_ok=True)
+            # Guardar portada local
+            cover_path = os.path.join(post_dir, f"caratula.{cover_format}")
+            with open(cover_path, "wb") as buf:
+                shutil.copyfileobj(cover_file.file, buf)
+            # Guardar audio local
+            audio_name = f"audio.{audio_format}"
+            audio_path = os.path.join(post_dir, audio_name)
+            with open(audio_path, "wb") as buf:
+                shutil.copyfileobj(audio_file.file, buf)
+        else:
+            # Producción: usa SSH/SFTP
+            with paramiko.SSHClient() as ssh:
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(
+                    hostname=SSH_HOST_RES,
+                    username=SSH_USERNAME_RES,
+                    password=SSH_PASSWORD_RES,
+                )
+                _, stdout, _ = ssh.exec_command(f"test -d {post_dir}")
+                if stdout.read() == b"":
+                    ssh.exec_command(f"sudo mkdir -p {post_dir}")
+                    ssh.exec_command(f"sudo chown -R $USER:$USER {post_dir}")
 
-        post_id = str(result.inserted_id)
-        post_dir = f"/var/www/html/beatnow/{user_id}/posts/{post_id}/"
+                # Sube portada
+                remote_cover = os.path.join(post_dir, f"caratula.{cover_format}")
+                with ssh.open_sftp().file(remote_cover, "wb") as buf:
+                    shutil.copyfileobj(cover_file.file, buf)
 
-        # Guarda en local SIEMPRE cuando estés en desarrollo
-        if os.getenv("DEV_MODE", "false").lower() == "true":
-            local_base = "/var/www/html/beatnow"
-            local_user_dir = os.path.join(local_base, str(user_id), "posts", post_id)
-            os.makedirs(local_user_dir, exist_ok=True)
-
-            # Escribe la portada
-            local_cover = os.path.join(local_user_dir, f"caratula.{cover_format}")
-            with open(local_cover, "wb") as f:
-                shutil.copyfileobj(cover_file.file, f)
-
-            # Escribe el audio
-            audio_filename = "audio.mp3" if audio_file_extension == "mp3" else "audio.wav"
-            local_audio = os.path.join(local_user_dir, audio_filename)
-            with open(local_audio, "wb") as f:
-                shutil.copyfileobj(audio_file.file, f)    
-
-
-        # Configuración de SSH
-        with paramiko.SSHClient() as ssh:
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(hostname=SSH_HOST_RES, username=SSH_USERNAME_RES, password=SSH_PASSWORD_RES)
-
-            # Verificar si el directorio del usuario existe, si no, crearlo
-            if not ssh.exec_command(f"test -d {post_dir}")[1].read():
-                
-                # Crear directorios en el servidor remoto
-                ssh.exec_command(f"sudo mkdir -p {post_dir}")
-                ssh.exec_command(f"sudo chown -R $USER:$USER {post_dir}")
-            if cover_file:
-                cover_filename = f"caratula.{cover_format}"
-                cover_file_path = os.path.join(post_dir, cover_filename)
-                with ssh.open_sftp().file(cover_file_path, "wb") as buffer:
-                    shutil.copyfileobj(cover_file.file, buffer)
-
-            if audio_file:
-                if audio_file_extension  in ["mp3"]:
-                    audio_file_path = os.path.join(post_dir, "audio.mp3")
-                else:
-                    audio_file_path = os.path.join(post_dir, "audio.wav")
-                
-                with ssh.open_sftp().file(audio_file_path, "wb") as buffer:
-                    shutil.copyfileobj(audio_file.file, buffer)
-
-    except paramiko.SSHException as e:
-        await post_collection.delete_one({"_id": result.inserted_id})
-        raise HTTPException(status_code=500, detail=f"SSH error: {str(e)}")
+                # Sube audio
+                remote_audio = os.path.join(post_dir, f"audio.{audio_format}")
+                with ssh.open_sftp().file(remote_audio, "wb") as buf:
+                    shutil.copyfileobj(audio_file.file, buf)
     except Exception as e:
-        if result:
-            # Eliminar el post de la base de datos si se ha creado antes de la excepción
-            await post_collection.delete_one({"_id": result.inserted_id})
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    existing_post = await post_collection.find_one({"_id": ObjectId(post_id)})
-    if not existing_post:
-        raise HTTPException(status_code=404, detail="Post not found")
+        await post_collection.delete_one({"_id": result.inserted_id})
+        raise HTTPException(500, f"Error saving files: {e}")
+
+    existing = await post_collection.find_one({"_id": ObjectId(post_id)})
+    if not existing:
+        raise HTTPException(404, "Post not found")
     return PostInDB(_id=post_id, **post.dict())
 
 @router.put("/update/{post_id}", response_model=PostInDB)
@@ -316,36 +298,7 @@ async def has_saved_post(post_id: str, current_user: User):
     user_id = await get_user_id(current_user.username)
     saved_exists = await interactions_collection.count_documents({"user_id": user_id, "post_id": post_id, "saved_date": {"$exists": True}})
     return saved_exists > 0
-'''
-@router.post("/change_post_cover/{post_id}")
-async def change_post_cover(post_id: str, file: UploadFile = File(...), current_user: NewUser = Depends(get_current_user)):
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    user_id = await get_user_id(current_user.username)
-    try:
-        # Obtener el post
-        post = await post_collection.find_one({"_id": ObjectId(post_id)})
-        if not post:
-            raise HTTPException(status_code=404, detail="Post not found")
 
-        # Verificar si el usuario tiene permisos para editar el post
-        if user_id != post["user_id"]:
-            raise HTTPException(status_code=403, detail="Unauthorized to edit this post")
-
-        # Guardar la nueva carátula con un nombre único y formato png
-        file_path = os.path.join("/var/www/html/beatnow", current_user.username, "posts", post_id, "caratula.jpg")
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-    return {"message": "Post cover updated successfully"}
-'''
 #@router.post("/delete_post_cover/{post_id}")
 async def delete_post_cover(post_id: str, current_user: User = Depends(get_current_user)):
     user_id = await get_user_id(current_user.username)
@@ -373,7 +326,3 @@ async def count_user_posts(user_id: str, current_user: User = Depends(get_curren
     # Contar las publicaciones del usuario
     count = await post_collection.count_documents({"user_id": user_id})
     return count
-
-
-
-
