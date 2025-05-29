@@ -20,7 +20,7 @@ def send_email(email_receiver: str, subject: str, body: str):
         print(f"Para: {em['To']}")
         print(f"Asunto: {em['Subject']}")
         
-        context = ssl.create_default_context()
+        context = ssl._create_unverified_context()
         
         print("Creando contexto SSL.")
         
